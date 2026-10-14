@@ -17,7 +17,7 @@ export default defineConfig(() => {
           name: 'aynot',
           short_name: 'aynot',
           description: 'Aynot. - Kişisel takip, okul notları ve çalışma asistanı.',
-          theme_color: '#0f766e',
+          theme_color: '#2F7FB5',
           background_color: '#f8fafc',
           display: 'standalone',
           start_url: '/',
