@@ -1,0 +1,58 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --sat: env(safe-area-inset-top, 0px);
+    --sar: env(safe-area-inset-right, 0px);
+    --sab: env(safe-area-inset-bottom, 0px);
+    --sal: env(safe-area-inset-left, 0px);
+  }
+
+  html {
+    min-height: 100%;
+    min-height: 100dvh;
+    min-height: -webkit-fill-available;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    -webkit-tap-highlight-color: transparent;
+    min-height: 100%;
+    min-height: 100dvh;
+    min-height: -webkit-fill-available;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  #root {
+    min-height: 100%;
+    min-height: 100dvh;
+    min-height: -webkit-fill-available;
+    width: 100%;
+  }
+}
+
+/* Ensure smooth touch scrolling and boundary containment on inner scrollable areas */
+.overflow-y-auto,
+.overflow-y-scroll,
+.overflow-auto {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+
+/* Hide scrollbar for clean horizontal tag scrolls */
+.scrollbar-none::-webkit-scrollbar,
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-none,
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

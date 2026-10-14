@@ -1,0 +1,107 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <!-- Background Gradient: Indigo to Teal -->
+    <linearGradient id="aynotBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4f46e5"/>
+      <stop offset="50%" stop-color="#0284c7"/>
+      <stop offset="100%" stop-color="#0d9488"/>
+    </linearGradient>
+
+    <!-- Fold shadow -->
+    <filter id="foldShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="-4" dy="6" stdDeviation="6" flood-color="#0f172a" flood-opacity="0.25"/>
+    </filter>
+
+    <filter id="paperShadow" x="-15%" y="-15%" width="130%" height="130%">
+      <feDropShadow dx="0" dy="16" stdDeviation="20" flood-color="#031628" flood-opacity="0.32"/>
+    </filter>
+
+    <filter id="badgeShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="6" stdDeviation="8" flood-color="#0f766e" flood-opacity="0.4"/>
+    </filter>
+
+    <!-- Folded Ear Gradient -->
+    <linearGradient id="foldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#cbd5e1"/>
+      <stop offset="50%" stop-color="#e2e8f0"/>
+      <stop offset="100%" stop-color="#f8fafc"/>
+    </linearGradient>
+
+    <!-- Checkmark Badge Gradient -->
+    <linearGradient id="badgeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#14b8a6"/>
+      <stop offset="100%" stop-color="#0f766e"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Base Rounded Squircle -->
+  <rect width="512" height="512" rx="120" fill="url(#aynotBg)"/>
+
+  <!-- Subtle glow inner overlay -->
+  <circle cx="120" cy="90" r="140" fill="#ffffff" opacity="0.12"/>
+  <circle cx="420" cy="430" r="160" fill="#14b8a6" opacity="0.18"/>
+
+  <!-- Note Paper with Folded Corner -->
+  <g filter="url(#paperShadow)">
+    <!-- Main white paper body with cut top-right corner -->
+    <path d="M 148 108
+             C 126 108 112 122 112 144
+             L 112 376
+             C 112 398 126 412 148 412
+             L 364 412
+             C 386 412 400 398 400 376
+             L 400 196
+             L 312 108
+             Z" 
+          fill="#ffffff"/>
+
+    <!-- Folded Ear Triangle with shadow -->
+    <path d="M 312 108
+             L 312 180
+             C 312 192 320 196 332 196
+             L 400 196
+             Z" 
+          fill="url(#foldGrad)"
+          filter="url(#foldShadow)"/>
+    
+    <!-- Clean fold diagonal line accent -->
+    <path d="M 312 108 L 400 196" stroke="#e2e8f0" stroke-width="2" stroke-linecap="round"/>
+
+    <!-- Note lines representing content -->
+    <!-- Line 1: Main Title Bar (Indigo) -->
+    <rect x="156" y="172" width="124" height="20" rx="10" fill="#4f46e5" opacity="0.9"/>
+    <!-- Line 2: Note Text (Teal) -->
+    <rect x="156" y="214" width="188" height="14" rx="7" fill="#0d9488" opacity="0.75"/>
+    <!-- Line 3: Note Subtext (Slate) -->
+    <rect x="156" y="246" width="144" height="12" rx="6" fill="#94a3b8" opacity="0.6"/>
+    <!-- Line 4: Note Subtext short -->
+    <rect x="156" y="274" width="96" height="12" rx="6" fill="#cbd5e1" opacity="0.65"/>
+
+    <!-- Sparkle Star at Top Left of Note -->
+    <path d="M 166 128
+             Q 166 138 176 138
+             Q 166 138 166 148
+             Q 166 138 156 138
+             Q 166 138 166 128 Z"
+          fill="#f59e0b"/>
+
+    <!-- Action Badge: Teal Circle with Crisp White Checkmark -->
+    <g filter="url(#badgeShadow)">
+      <circle cx="330" cy="344" r="44" fill="url(#badgeGrad)"/>
+      <path d="M 314 344 L 326 356 L 348 332" 
+            fill="none" 
+            stroke="#ffffff" 
+            stroke-width="7" 
+            stroke-linecap="round" 
+            stroke-linejoin="round"/>
+    </g>
+
+    <!-- Additional Little Sparkle near the badge -->
+    <path d="M 270 348
+             Q 270 355 277 355
+             Q 270 355 270 362
+             Q 270 355 263 355
+             Q 270 355 270 348 Z"
+          fill="#06b6d4"/>
+  </g>
+</svg>
