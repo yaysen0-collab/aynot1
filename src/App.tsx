@@ -2164,7 +2164,6 @@ export default function App() {
         onClose={() => setIsGlobalQuickNoteOpen(false)}
         tags={personalTags}
         onSaveNote={handleSavePersonalNote}
-        onDeleteNote={handleDeletePersonalNote}
         voiceNotesEnabled={voiceNotesEnabled}
       />
 
