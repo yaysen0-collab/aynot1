@@ -32,6 +32,7 @@ import {
   UniversityNote, 
   UniversityAssignment,
   ExamResultStatus,
+  ExamType,
   UniversityNoteTag
 } from '../../types';
 import { StudyView } from './StudyView';
@@ -41,6 +42,7 @@ import { ExamImportModal } from '../university/ExamImportModal';
 import { ExamEditModal } from '../university/ExamEditModal';
 import { ExamResultModal } from '../university/ExamResultModal';
 import { UniversityNoteModal } from '../university/UniversityNoteModal';
+import { CommonExamDateCard } from '../university/CommonExamDateCard';
 import { 
   calculateTermStats, 
   getExamCountdown, 
@@ -89,6 +91,9 @@ interface StudyContainerViewProps {
   onSaveExamResult: (examId: string, status: ExamResultStatus, score?: string, feedback?: string) => Promise<void>;
   onPostponeResultPrompt: (examId: string) => Promise<void>;
   onSuggestStudyTask?: (courseName: string) => void;
+  /** Ortak sınav tarihi: tek tarihi aktif dönemdeki tüm derslere uygular / kaldırır */
+  onApplyCommonExamDate?: (date: string, time: string | undefined, examType: ExamType) => Promise<void>;
+  onClearCommonExamDate?: () => Promise<void>;
 
   // Common
   voiceNotesEnabled?: boolean;
@@ -131,6 +136,8 @@ export const StudyContainerView: React.FC<StudyContainerViewProps> = ({
   onSaveExamResult,
   onPostponeResultPrompt,
   onSuggestStudyTask,
+  onApplyCommonExamDate,
+  onClearCommonExamDate,
   voiceNotesEnabled = true,
   initialSubTab = 'plan',
   initialSelectedCourseId,
@@ -595,6 +602,16 @@ export const StudyContainerView: React.FC<StudyContainerViewProps> = ({
       {/* SUB-TAB 3: SINAVLAR (Geri Sayım, Sınav Sonuç Sorusu & Liste) */}
       {activeSubTab === 'sinavlar' && (
         <div className="space-y-4">
+          {/* Ortak sınav tarihi (tüm dersler aynı gün) */}
+          {onApplyCommonExamDate && onClearCommonExamDate && (
+            <CommonExamDateCard
+              courseCount={termCourses.length}
+              exams={activeTerm ? exams.filter((e) => e.termId === activeTerm.id) : []}
+              onApply={onApplyCommonExamDate}
+              onClear={onClearCommonExamDate}
+            />
+          )}
+
           {/* Quick Exam Actions */}
           <div className="flex flex-wrap items-center justify-between gap-2 bg-white dark:bg-slate-900 p-4 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-xs">
             <div>
