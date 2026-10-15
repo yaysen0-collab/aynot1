@@ -825,13 +825,28 @@ export const TodayView: React.FC<TodayViewProps> = ({
         const courseMap = new Map(universityCourses.map((c) => [c.id, c]));
 
         // 1. Upcoming exams countdown (closest up to 3)
-        const upcomingExams = universityExams
+        const upcomingExamsAll = universityExams
           .filter((e) => {
             const cd = getExamCountdown(e, todayStr);
             return !cd.isPast;
           })
-          .sort((a, b) => a.date.localeCompare(b.date))
+          .sort((a, b) => a.date.localeCompare(b.date));
+
+        // Ortak sınav tarihiyle oluşturulan sınavlar (tüm dersler aynı gün) tek satırda gösterilir
+        const seenCommonKeys = new Set<string>();
+        const upcomingExams = upcomingExamsAll
+          .filter((e) => {
+            if (!e.commonGroup) return true;
+            const key = `${e.commonGroup}-${e.date}`;
+            if (seenCommonKeys.has(key)) return false;
+            seenCommonKeys.add(key);
+            return true;
+          })
           .slice(0, 3);
+        const commonCourseCount = (e: UniversityExam) =>
+          e.commonGroup
+            ? upcomingExamsAll.filter((x) => x.commonGroup === e.commonGroup && x.date === e.date).length
+            : 0;
 
         // 2. Exams eligible for result inquiry question ("Sonuç açıklandı mı?")
         const resultInquiryExams = universityExams.filter((e) => {
@@ -909,7 +924,10 @@ export const TodayView: React.FC<TodayViewProps> = ({
             {upcomingExams.length > 0 && (() => {
               const primaryExam = upcomingExams[0];
               const primaryCourse = courseMap.get(primaryExam.courseId);
-              const primaryCourseName = primaryCourse?.name || 'Üniversite Dersi';
+              const primaryIsCommon = !!primaryExam.commonGroup;
+              const primaryCourseName = primaryIsCommon
+                ? `Tüm dersler (${commonCourseCount(primaryExam)} ders)`
+                : primaryCourse?.name || 'Üniversite Dersi';
               const primaryCountdown = getExamCountdown(primaryExam, todayStr);
               const isUrgent = primaryCountdown.isImminent; // 7 days or fewer
 
@@ -935,7 +953,7 @@ export const TodayView: React.FC<TodayViewProps> = ({
                       <div>
                         <div className="flex items-center gap-2">
                           <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100">
-                            En Yakın Üniversite Sınavı
+                            {primaryIsCommon ? 'Üniversite Sınavlarına Kalan Süre' : 'En Yakın Üniversite Sınavı'}
                           </h3>
                           {isUrgent && (
                             <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-200/80 dark:bg-amber-900/80 text-amber-900 dark:text-amber-200">
@@ -980,7 +998,7 @@ export const TodayView: React.FC<TodayViewProps> = ({
                   <div className="p-3.5 rounded-2xl bg-white/80 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700 flex items-center justify-between gap-3">
                     <div>
                       <div className="font-bold text-slate-800 dark:text-slate-100 text-xs">
-                        {primaryCourse?.code ? `${primaryCourse.code} - ` : ''}{primaryCourseName}
+                        {!primaryIsCommon && primaryCourse?.code ? `${primaryCourse.code} - ` : ''}{primaryCourseName}
                       </div>
                       <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 flex items-center gap-2">
                         <span className="font-mono">{primaryExam.date}</span>
@@ -989,7 +1007,9 @@ export const TodayView: React.FC<TodayViewProps> = ({
                     </div>
 
                     <div
-                      className={`px-3 py-1.5 rounded-xl font-bold text-xs flex-shrink-0 ${
+                      className={`rounded-xl font-bold flex-shrink-0 ${
+                        primaryIsCommon ? 'px-4 py-2 text-sm' : 'px-3 py-1.5 text-xs'
+                      } ${
                         isUrgent
                           ? 'bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-200'
                           : 'bg-indigo-50 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300'
@@ -1035,7 +1055,9 @@ export const TodayView: React.FC<TodayViewProps> = ({
                       </div>
                       {upcomingExams.slice(1).map((exam) => {
                         const course = courseMap.get(exam.courseId);
-                        const cName = course?.name || 'Üniversite Dersi';
+                        const cName = exam.commonGroup
+                          ? `Tüm dersler (${commonCourseCount(exam)} ders)`
+                          : course?.name || 'Üniversite Dersi';
                         const cd = getExamCountdown(exam, todayStr);
 
                         return (

@@ -21,6 +21,7 @@ import {
   UniversityNote,
   UniversityAssignment,
   ExamResultStatus,
+  ExamType,
   ProjectIdea,
   PersonalNote,
   PersonalNoteTag,
@@ -114,7 +115,8 @@ import { StudyContainerView, StudySubTab } from './components/study/StudyContain
 import { NotesContainerView, NotesSubTab } from './components/notes/NotesContainerView';
 import { SchoolContainerView, SchoolSubTab } from './components/school/SchoolContainerView';
 import { isCardDueToday, calculateNextReview } from './utils/englishUtils';
-import { getExamCountdown } from './utils/universityUtils';
+import { getExamCountdown, getExamTypeTitle } from './utils/universityUtils';
+import { COMMON_EXAM_GROUP, storeCommonExam, clearStoredCommonExam } from './utils/commonExam';
 import { FloatingActionButton } from './components/FloatingActionButton';
 import { GlobalSearchModal } from './components/GlobalSearchModal';
 import { TodayView } from './components/today/TodayView';
@@ -1393,8 +1395,87 @@ export default function App() {
     await refreshData();
   };
 
+  // Ortak sınav tarihi: giriş ekranında da gösterilebilsin diye bu cihaza yazılır
+  useEffect(() => {
+    const common = universityExams
+      .filter((e) => e.commonGroup === COMMON_EXAM_GROUP)
+      .sort((a, b) => a.date.localeCompare(b.date))[0];
+    if (common) {
+      storeCommonExam({ date: common.date, time: common.time, label: getExamTypeTitle(common.examType) });
+    }
+  }, [universityExams]);
+
+  // Ortak tarih varsa, sonradan eklenen derslere de aynı sınavı otomatik oluştur
+  const ensureCommonExamsForCourses = async (newCourses: UniversityCourse[]) => {
+    const ref = universityExams
+      .filter((e) => e.commonGroup === COMMON_EXAM_GROUP)
+      .sort((a, b) => a.date.localeCompare(b.date))[0];
+    if (!ref) return;
+    const now = Date.now();
+    const toCreate: UniversityExam[] = newCourses
+      .filter((c) => c.termId === ref.termId && !universityExams.some((e) => e.id === `exam-common-${c.id}`))
+      .map((c) => ({
+        id: `exam-common-${c.id}`,
+        termId: c.termId,
+        courseId: c.id,
+        examType: ref.examType,
+        date: ref.date,
+        time: ref.time,
+        reminderDaysBefore: ref.reminderDaysBefore ?? 3,
+        resultStatus: 'pending',
+        commonGroup: COMMON_EXAM_GROUP,
+        createdAt: now,
+        updatedAt: now,
+      }));
+    if (toCreate.length > 0) await saveMultipleUniversityExams(toCreate);
+  };
+
+  const handleApplyCommonExamDate = async (date: string, time: string | undefined, examType: ExamType) => {
+    const term = universityTerms.find((t) => t.isActive);
+    if (!term) return;
+    const termCourses = universityCourses.filter((c) => c.termId === term.id);
+    const now = Date.now();
+    const toSave: UniversityExam[] = termCourses.map((course) => {
+      const id = `exam-common-${course.id}`;
+      const existing = universityExams.find((e) => e.id === id);
+      return {
+        ...(existing || {}),
+        id,
+        termId: term.id,
+        courseId: course.id,
+        examType,
+        date,
+        time: time || undefined,
+        reminderDaysBefore: existing?.reminderDaysBefore ?? 3,
+        resultStatus: existing?.resultStatus || 'pending',
+        // Tarih değiştiyse "3 gün kala çalışma görevi" sorusu yeniden sorulabilsin
+        hasPromptedStudyTask: existing && existing.date === date ? existing.hasPromptedStudyTask : false,
+        commonGroup: COMMON_EXAM_GROUP,
+        createdAt: existing?.createdAt || now,
+        updatedAt: now,
+      } as UniversityExam;
+    });
+    if (toSave.length > 0) await saveMultipleUniversityExams(toSave);
+    storeCommonExam({ date, time, label: getExamTypeTitle(examType) });
+    await refreshData();
+  };
+
+  const handleClearCommonExamDate = async () => {
+    // Sonucu girilmiş sınavlar silinmez
+    const targets = universityExams.filter(
+      (e) => e.commonGroup === COMMON_EXAM_GROUP && (!e.resultStatus || e.resultStatus === 'pending')
+    );
+    for (const e of targets) {
+      await deleteUniversityExam(e.id);
+    }
+    clearStoredCommonExam();
+    await refreshData();
+  };
+
   const handleSaveUniversityCourse = async (course: UniversityCourse) => {
+    const isNew = !universityCourses.some((c) => c.id === course.id);
     await saveUniversityCourse(course);
+    if (isNew) await ensureCommonExamsForCourses([course]);
     await refreshData();
   };
 
@@ -1408,6 +1489,7 @@ export default function App() {
       updatedAt: Date.now(),
     }));
     await saveMultipleUniversityCourses(toSave);
+    await ensureCommonExamsForCourses(toSave);
     await refreshData();
   };
 
@@ -1921,6 +2003,8 @@ export default function App() {
                 onDeleteCourse={handleDeleteUniversityCourse}
                 onSaveExam={handleSaveUniversityExam}
                 onSaveMultipleExams={handleSaveMultipleUniversityExams}
+                onApplyCommonExamDate={handleApplyCommonExamDate}
+                onClearCommonExamDate={handleClearCommonExamDate}
                 onDeleteExam={handleDeleteUniversityExam}
                 onSaveNote={handleSaveUniversityNote}
                 onDeleteNote={handleDeleteUniversityNote}

@@ -209,6 +209,7 @@ export interface UniversityExam {
   resultFeedbackNote?: string; // İsteğe bağlı kişisel not
   resultPromptDismissedUntil?: string; // "Daha değil" dendiğinde ertesi güne kadar erteleme (YYYY-MM-DD)
   hasPromptedStudyTask?: boolean; // 3 gün kala çalışma görevi soruldu mu
+  commonGroup?: string; // 'main' ise "ortak sınav tarihi" ile tüm derslere birlikte oluşturulmuştur
   createdAt: number;
   updatedAt: number;
 }

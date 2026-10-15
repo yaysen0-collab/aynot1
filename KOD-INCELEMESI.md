@@ -42,3 +42,13 @@
 - **Ders notu formu:** Ders detay sayfasında pencere sürekli bağlı kaldığı için bir notu düzenledikten sonra diğer not açıldığında eski metin görünüyordu. Form her açılışta sıfırlanıyor. Düzenlemede oluşturulma tarihi de sıfırlanmıyor.
 - **Koyu tema:** Tailwind 4 `dark:` sınıflarını varsayılan olarak sistem ayarına bağlar; uygulama ise `<html class="dark">` kullanıyor. `index.css`'e `@custom-variant dark` eklendi, böylece Ayarlar'daki Açık/Koyu seçimi çalışır.
 - **Renk paleti:** Ana renk (#2F7FB5) `teal`, `indigo`, `purple`, `blue`; vurgu rengi (#F4B860) `sky`, `amber` sınıflarına bağlandı. `emerald` (başarı) ve `rose` (hata/silme) anlamlarını korumak için değiştirilmedi.
+
+## Ortak sınav tarihi (geri sayım)
+
+- **Çalışma → Sınavlar** sekmesinin üstünde "Ortak Sınav Tarihi" kartı var. Tarih (isteğe bağlı saat ve sınav türü) girilip **Tüm derslere uygula** denince aktif dönemdeki her derse aynı sınav yazılır (`exam-common-{dersId}` kimliğiyle, tekrar uygulamak çift kayıt oluşturmaz). Tarih değişince hepsi birlikte güncellenir.
+- Ortak tarih varken sonradan eklenen derslere de aynı sınav otomatik oluşturulur.
+- **Ortak tarihi kaldır** sonucu girilmemiş ortak sınavları siler; sonucu girilmiş olanlara dokunmaz.
+- **Bugün** ekranında bu sınavlar tek kart olarak gösterilir: "Üniversite Sınavlarına Kalan Süre / Tüm dersler (N ders) / X gün kaldı".
+- **Giriş ekranında** "Sınava X gün kaldı" bilgisi, tarih bu cihazda en az bir kez girildiyse (localStorage) gösterilir. Hiç giriş yapılmamış yeni bir cihazda tarih bilinmediği için görünmez.
+- Tek bir dersin sınavı kartı üzerinden düzenlenirse o ders ortak gruptan ayrılır ve bağımsız bir sınav olarak kalır.
+- Günün sözleri listesinden "Konfüçyüs" imzalı iki söz çıkarıldı (`src/utils/quotes.ts`).

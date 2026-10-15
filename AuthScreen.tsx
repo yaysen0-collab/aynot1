@@ -7,7 +7,8 @@ import {
   resetPassword,
   getAuthErrorMessage
 } from '../../services/authService';
-import { Mail, Lock, User, ArrowRight, CheckCircle2, AlertCircle, Eye, EyeOff, Sparkles } from 'lucide-react';
+import { Mail, Lock, User, ArrowRight, CheckCircle2, AlertCircle, Eye, EyeOff, Sparkles, GraduationCap } from 'lucide-react';
+import { readStoredCommonExam, daysUntilDate, formatDaysLabel } from '../../utils/commonExam';
 
 interface AuthScreenProps {
   onSuccess?: () => void;
@@ -15,6 +16,9 @@ interface AuthScreenProps {
 
 export const AuthScreen: React.FC<AuthScreenProps> = () => {
   const [mode, setMode] = useState<'login' | 'register'>('login');
+  // Üniversite sınavlarına kalan gün (bu cihazda daha önce ortak sınav tarihi girildiyse)
+  const [storedExam] = useState(() => readStoredCommonExam());
+  const examDaysLeft = storedExam ? daysUntilDate(storedExam.date) : null;
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
@@ -108,6 +112,12 @@ export const AuthScreen: React.FC<AuthScreenProps> = () => {
           <p className="text-sm text-slate-500 dark:text-slate-400 max-w-xs">
             Kişisel takip, okul notları ve çalışma asistanınız.
           </p>
+          {examDaysLeft !== null && examDaysLeft >= 0 && (
+            <div className="mt-1 inline-flex items-center gap-2 px-3.5 py-2 rounded-2xl bg-teal-50 dark:bg-teal-950/50 border border-teal-200 dark:border-teal-900 text-teal-800 dark:text-teal-200 text-sm font-bold">
+              <GraduationCap className="w-4 h-4" />
+              <span>{formatDaysLabel(examDaysLeft)}</span>
+            </div>
+          )}
         </div>
 
         {/* Auth Card */}
