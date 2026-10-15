@@ -1,0 +1,138 @@
+@import "tailwindcss";
+
+/* Marka renkleri: tek yerden değiştirilir. */
+@theme {
+  /* ANA RENK: mavi #2F7FB5 (600 tonu). teal / indigo / purple / blue sınıflarının hepsi aynı mavi paletine bağlanır. */
+  --color-teal-50: #eff6fa;
+  --color-teal-100: #dfedf6;
+  --color-teal-200: #bfdbee;
+  --color-teal-300: #92c2e3;
+  --color-teal-400: #59a2d4;
+  --color-teal-500: #3d93cd;
+  --color-teal-600: #2f7fb5;
+  --color-teal-700: #276996;
+  --color-teal-800: #205579;
+  --color-teal-900: #194461;
+  --color-teal-950: #102b3d;
+
+  --color-indigo-50: #eff6fa;
+  --color-indigo-100: #dfedf6;
+  --color-indigo-200: #bfdbee;
+  --color-indigo-300: #92c2e3;
+  --color-indigo-400: #59a2d4;
+  --color-indigo-500: #3d93cd;
+  --color-indigo-600: #2f7fb5;
+  --color-indigo-700: #276996;
+  --color-indigo-800: #205579;
+  --color-indigo-900: #194461;
+  --color-indigo-950: #102b3d;
+
+  --color-purple-50: #eff6fa;
+  --color-purple-100: #dfedf6;
+  --color-purple-200: #bfdbee;
+  --color-purple-300: #92c2e3;
+  --color-purple-400: #59a2d4;
+  --color-purple-500: #3d93cd;
+  --color-purple-600: #2f7fb5;
+  --color-purple-700: #276996;
+  --color-purple-800: #205579;
+  --color-purple-900: #194461;
+  --color-purple-950: #102b3d;
+
+  --color-blue-50: #eff6fa;
+  --color-blue-100: #dfedf6;
+  --color-blue-200: #bfdbee;
+  --color-blue-300: #92c2e3;
+  --color-blue-400: #59a2d4;
+  --color-blue-500: #3d93cd;
+  --color-blue-600: #2f7fb5;
+  --color-blue-700: #276996;
+  --color-blue-800: #205579;
+  --color-blue-900: #194461;
+  --color-blue-950: #102b3d;
+
+  /* VURGU RENGİ: amber #F4B860 (500 tonu). sky / amber sınıfları bu palete bağlanır. */
+  --color-sky-50: #fdf6ec;
+  --color-sky-100: #fcecd5;
+  --color-sky-200: #f9ddb4;
+  --color-sky-300: #f7cc8d;
+  --color-sky-400: #f5bf70;
+  --color-sky-500: #f4b860;
+  --color-sky-600: #cc8419;
+  --color-sky-700: #a56c18;
+  --color-sky-800: #845715;
+  --color-sky-900: #684512;
+  --color-sky-950: #3d280b;
+
+  --color-amber-50: #fdf6ec;
+  --color-amber-100: #fcecd5;
+  --color-amber-200: #f9ddb4;
+  --color-amber-300: #f7cc8d;
+  --color-amber-400: #f5bf70;
+  --color-amber-500: #f4b860;
+  --color-amber-600: #cc8419;
+  --color-amber-700: #a56c18;
+  --color-amber-800: #845715;
+  --color-amber-900: #684512;
+  --color-amber-950: #3d280b;
+}
+
+/* Koyu tema: uygulama <html class="dark"> ile çalışır. Tailwind 4 varsayılanı sistem ayarıdır, bu satır olmadan Ayarlar'daki Açık/Koyu seçimi etki etmez. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+@layer base {
+  :root {
+    --sat: env(safe-area-inset-top, 0px);
+    --sar: env(safe-area-inset-right, 0px);
+    --sab: env(safe-area-inset-bottom, 0px);
+    --sal: env(safe-area-inset-left, 0px);
+  }
+
+  html {
+    min-height: 100%;
+    min-height: 100dvh;
+    min-height: -webkit-fill-available;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    -webkit-tap-highlight-color: transparent;
+    min-height: 100%;
+    min-height: 100dvh;
+    min-height: -webkit-fill-available;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  #root {
+    min-height: 100%;
+    min-height: 100dvh;
+    min-height: -webkit-fill-available;
+    width: 100%;
+  }
+}
+
+/* Ensure smooth touch scrolling and boundary containment on inner scrollable areas */
+.overflow-y-auto,
+.overflow-y-scroll,
+.overflow-auto {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+
+/* Hide scrollbar for clean horizontal tag scrolls */
+.scrollbar-none::-webkit-scrollbar,
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-none,
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
