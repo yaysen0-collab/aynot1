@@ -17,12 +17,20 @@ export const NAV_TABS: TabItem[] = [
   { id: 'notlar', label: 'Notlar', icon: StickyNote },
 ];
 
+export interface ModuleSettings {
+  showSchool: boolean;
+  showStudy: boolean;
+  showEnglish: boolean;
+  showNotes: boolean;
+}
+
 interface BottomNavProps {
   activeTab: TabId;
   onTabChange: (tab: TabId) => void;
   englishDueCount?: number;
   reviewBadge?: number;
   upcomingExamsBadge?: number;
+  moduleSettings?: ModuleSettings;
 }
 
 export const BottomNav: React.FC<BottomNavProps> = ({ 
@@ -30,13 +38,24 @@ export const BottomNav: React.FC<BottomNavProps> = ({
   onTabChange, 
   englishDueCount, 
   reviewBadge,
-  upcomingExamsBadge = 0
+  upcomingExamsBadge = 0,
+  moduleSettings
 }) => {
   const badgeCount = reviewBadge !== undefined ? reviewBadge : (englishDueCount || 0);
+  
+  // Sadece aktif modüllere ait sekmeleri filtrele
+  const visibleTabs = NAV_TABS.filter((tab) => {
+    if (tab.id === 'ogrenciler' && moduleSettings && !moduleSettings.showSchool) return false;
+    if (tab.id === 'calisma' && moduleSettings && !moduleSettings.showStudy) return false;
+    if (tab.id === 'ingilizce' && moduleSettings && !moduleSettings.showEnglish) return false;
+    if (tab.id === 'notlar' && moduleSettings && !moduleSettings.showNotes) return false;
+    return true;
+  });
+
   return (
     <nav className="md:hidden fixed bottom-0 left-0 right-0 z-30 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 shadow-lg shadow-slate-950/5 pb-[calc(env(safe-area-inset-bottom,0px)+0.5rem)] pt-1.5 transition-colors">
       <div className="max-w-md mx-auto px-1 flex items-center justify-around">
-        {NAV_TABS.map((tab) => {
+        {visibleTabs.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
           const isEnglish = tab.id === 'ingilizce';
