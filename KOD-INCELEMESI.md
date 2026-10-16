@@ -62,3 +62,23 @@
 - Klavye açılınca ekran görünen alana uyar (iPhone Safari için `visualViewport`).
 - `QuickPersonalNoteModal.tsx` (+ düğmesindeki hızlı not) artık aynı tam ekran editörü açar. Eski küçük hızlı not penceresi kaldırıldı.
 - Bileşenlerin dış arayüzü (props) aynı kaldığı için Notlar listesi ve diğer ekranlar değişmedi. Ders notu, öğrenci notu ve İngilizce notu pencerelerine dokunulmadı.
+
+## Tüm not ekranları tek tasarımda
+
+- Yeni ortak iskelet: `src/components/common/NoteEditorShell.tsx` (tam ekran sayfa, büyük başlık, geri oku + **Bitti**, yazdıkça uzayan gövde, ayar satırları için `NoteMetaCard`, klavye açılınca ekrana uyum).
+- Aynı iskeleti kullanan ekranlar: **Okul notu** (`StudentNoteModal`), **Ders notu** (`UniversityNoteModal`), **İngilizce notu** (`EnglishNoteModal`). Kişisel notlar (`PersonalNoteModal`) aynı görünümde ama otomatik kayıtlı.
+- Bu üç ekranda **otomatik kayıt yok**: kayıt sırasında başka işlemler tetiklendiği ve yeni nota her seferinde yeni kimlik verildiği için çift kayıt riski olurdu. "Bitti" kaydeder; yazılmış ama kaydedilmemiş bir not varken geri oka basılırsa "Devam et / Kaydetme / Kaydet" sorulur.
+- Her pencerenin kendi mantığı (doğrulama, fotoğraf sıkıştırma, sesle yazma, kelime kartına çevirme, ders seçici, biçimlendirme düğmeleri) korundu; dış arayüzleri (props) değişmedi.
+- **Düzeltme:** İngilizce not penceresi sürekli bağlı kaldığı için bir notu düzenledikten sonra yeni not açılınca eski metin görünüyordu; her açılışta form sıfırlanıyor. Başlık veya içerik boşken kayıt sessizce başarısız oluyordu, artık uyarı gösteriyor.
+
+## Ders notu eklenemiyor ve yavaş açılış
+
+**Ders notu**
+- Ders yokken "Yeni Ders Notu" düğmesi hiç görünmüyordu ve boş ekranda neden olduğu yazmıyordu. Artık "Not eklemek için önce ders ekleyin" açıklaması ve **Ders Ekle** düğmesi (Dersler sekmesine götürür) var; ders varsa **İlk Notu Yaz** düğmesi çıkıyor.
+- Ders ve İngilizce notlarında başlık artık **isteğe bağlı**: boşsa içeriğin ilk satırı başlık olur (iPhone gibi). Eskiden başlık boşken "Bitti" pasif kalıyordu.
+
+**Açılış hızı**
+- Firestore bağlantısı bazı ağlarda (proxy, operatör filtresi) akış bağlantısını kuramayıp ~10 sn bekliyordu. `experimentalAutoDetectLongPolling` ile durum hemen algılanıp yedek yönteme geçiliyor.
+- Yükleme ekranı en fazla 2,5 sn (eskiden 8 sn) bekliyor; veri geldikçe ekran doluyor.
+- Ağır sekmeler (Çalışma, Okul, Notlar, İngilizce, Ayarlar) ilk açılışta değil, ilk açıldıklarında yükleniyor. Ana paketin boyutu yaklaşık üçte bire indi. Kullanılmayan ağır importlar (`UniversityView`, `IdeasView` vb.) `App.tsx`'ten kaldırıldı.
+- **Veri güvenliği düzeltmesi:** Yeni bir cihazda önbellek boşken gelen ilk (boş) yanıt, varsayılan dönemi ve kişisel etiketleri sunucuya yeniden yazıp mevcut verinin üzerine yazabilirdi. Artık varsayılanlar yalnızca sunucudan doğrulanmış boş yanıtta yazılıyor.
