@@ -60,6 +60,13 @@ import { getExamCountdown, getExamTypeTitle, generateExamIcsFile } from '../../u
 import { ExamResultModal } from '../university/ExamResultModal';
 import { getDailyQuote } from '../../utils/quotes';
 
+export interface ModuleSettings {
+  showSchool: boolean;
+  showStudy: boolean;
+  showEnglish: boolean;
+  showNotes: boolean;
+}
+
 interface TodayViewProps {
   students: Student[];
   studentNotes: StudentNote[];
@@ -75,6 +82,7 @@ interface TodayViewProps {
   universityCourses?: UniversityCourse[];
   universityExams?: UniversityExam[];
   projectIdeas?: ProjectIdea[];
+  moduleSettings?: ModuleSettings;
   onNavigateToStudents: () => void;
   onSelectStudent: (studentId: string) => void;
   onOpenQuickNote: () => void;
@@ -113,6 +121,12 @@ export const TodayView: React.FC<TodayViewProps> = ({
   universityCourses = [],
   universityExams = [],
   projectIdeas = [],
+  moduleSettings = {
+    showSchool: true,
+    showStudy: true,
+    showEnglish: true,
+    showNotes: true,
+  },
   userName = 'Zipidola',
   personalNotes = [],
   onNavigateToStudents,
@@ -282,962 +296,976 @@ export const TodayView: React.FC<TodayViewProps> = ({
             </div>
           </div>
 
-          {/* SAYAÇ KARTLARI: Yan yana üç küçük kart (Kelime, Not, Fikir) */}
-          <div className="grid grid-cols-3 gap-2 sm:gap-2.5 mt-4">
+          {/* SAYAÇ KARTLARI: Yan yana üç küçük kart (Kelime, Not, Fikir) - Yalnızca Açık Sekmelere Göre */}
+          <div className="flex gap-2 sm:gap-2.5 mt-4">
             {/* 1. Kelime */}
-            <button
-              type="button"
-              onClick={onNavigateToEnglish}
-              className="bg-white/10 hover:bg-white/15 backdrop-blur-sm rounded-2xl p-2.5 sm:p-3 text-left transition active:scale-95 border border-white/10 flex flex-col justify-between"
-            >
-              <div className="flex items-center gap-1.5 text-teal-200 text-xs font-semibold mb-1">
-                <Languages className="w-3.5 h-3.5 text-teal-300" />
-                <span>Kelime</span>
-              </div>
-              <div className="text-base sm:text-lg font-bold text-white leading-tight">
-                {totalWords}
-              </div>
-              <div className="text-[10px] sm:text-[11px] text-teal-100/80 mt-0.5 font-medium leading-tight truncate" title={`${totalWords} kelime, ${learnedWords} öğrenildi`}>
-                {totalWords > 0 ? `${learnedWords} öğrenildi` : '0 öğrenildi'}
-              </div>
-            </button>
+            {moduleSettings.showEnglish && (
+              <button
+                type="button"
+                onClick={onNavigateToEnglish}
+                className="flex-1 min-w-0 bg-white/10 hover:bg-white/15 backdrop-blur-sm rounded-2xl p-2.5 sm:p-3 text-left transition active:scale-95 border border-white/10 flex flex-col justify-between"
+              >
+                <div className="flex items-center gap-1.5 text-teal-200 text-xs font-semibold mb-1">
+                  <Languages className="w-3.5 h-3.5 text-teal-300" />
+                  <span className="truncate">Kelime</span>
+                </div>
+                <div className="text-base sm:text-lg font-bold text-white leading-tight">
+                  {totalWords}
+                </div>
+                <div className="text-[10px] sm:text-[11px] text-teal-100/80 mt-0.5 font-medium leading-tight truncate" title={`${totalWords} kelime, ${learnedWords} öğrenildi`}>
+                  {totalWords > 0 ? `${learnedWords} öğrenildi` : '0 öğrenildi'}
+                </div>
+              </button>
+            )}
 
             {/* 2. Not */}
-            <button
-              type="button"
-              onClick={onNavigateToNotes}
-              className="bg-white/10 hover:bg-white/15 backdrop-blur-sm rounded-2xl p-2.5 sm:p-3 text-left transition active:scale-95 border border-white/10 flex flex-col justify-between"
-            >
-              <div className="flex items-center gap-1.5 text-teal-200 text-xs font-semibold mb-1">
-                <StickyNote className="w-3.5 h-3.5 text-teal-300" />
-                <span>Not</span>
-              </div>
-              <div className="text-base sm:text-lg font-bold text-white leading-tight">
-                {totalAllNotes}
-              </div>
-              <div className="text-[10px] sm:text-[11px] text-teal-100/80 mt-0.5 font-medium leading-tight truncate">
-                Okul & Genel
-              </div>
-            </button>
+            {moduleSettings.showNotes && (
+              <button
+                type="button"
+                onClick={onNavigateToNotes}
+                className="flex-1 min-w-0 bg-white/10 hover:bg-white/15 backdrop-blur-sm rounded-2xl p-2.5 sm:p-3 text-left transition active:scale-95 border border-white/10 flex flex-col justify-between"
+              >
+                <div className="flex items-center gap-1.5 text-teal-200 text-xs font-semibold mb-1">
+                  <StickyNote className="w-3.5 h-3.5 text-teal-300" />
+                  <span className="truncate">Not</span>
+                </div>
+                <div className="text-base sm:text-lg font-bold text-white leading-tight">
+                  {totalAllNotes}
+                </div>
+                <div className="text-[10px] sm:text-[11px] text-teal-100/80 mt-0.5 font-medium leading-tight truncate">
+                  Okul & Genel
+                </div>
+              </button>
+            )}
 
             {/* 3. Fikir */}
-            <button
-              type="button"
-              onClick={() => {
-                if (onNavigateToIdeas) {
-                  onNavigateToIdeas();
-                } else if (onNavigateToNotes) {
-                  onNavigateToNotes();
-                }
-              }}
-              className="bg-white/10 hover:bg-white/15 backdrop-blur-sm rounded-2xl p-2.5 sm:p-3 text-left transition active:scale-95 border border-white/10 flex flex-col justify-between"
-            >
-              <div className="flex items-center gap-1.5 text-teal-200 text-xs font-semibold mb-1">
-                <Lightbulb className="w-3.5 h-3.5 text-amber-300" />
-                <span>Fikir</span>
-              </div>
-              <div className="text-base sm:text-lg font-bold text-white leading-tight">
-                {totalActiveIdeas}
-              </div>
-              <div className="text-[10px] sm:text-[11px] text-teal-100/80 mt-0.5 font-medium leading-tight truncate">
-                Aktif fikir
-              </div>
-            </button>
+            {moduleSettings.showNotes && (
+              <button
+                type="button"
+                onClick={() => {
+                  if (onNavigateToIdeas) {
+                    onNavigateToIdeas();
+                  } else if (onNavigateToNotes) {
+                    onNavigateToNotes();
+                  }
+                }}
+                className="flex-1 min-w-0 bg-white/10 hover:bg-white/15 backdrop-blur-sm rounded-2xl p-2.5 sm:p-3 text-left transition active:scale-95 border border-white/10 flex flex-col justify-between"
+              >
+                <div className="flex items-center gap-1.5 text-teal-200 text-xs font-semibold mb-1">
+                  <Lightbulb className="w-3.5 h-3.5 text-amber-300" />
+                  <span className="truncate">Fikir</span>
+                </div>
+                <div className="text-base sm:text-lg font-bold text-white leading-tight">
+                  {totalActiveIdeas}
+                </div>
+                <div className="text-[10px] sm:text-[11px] text-teal-100/80 mt-0.5 font-medium leading-tight truncate">
+                  Aktif fikir
+                </div>
+              </button>
+            )}
           </div>
         </div>
       </div>
 
       {/* Quick Action Bar for Classroom */}
-      <div>
-        <button
-          onClick={onOpenQuickNote}
-          className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-2xl bg-teal-600 hover:bg-teal-700 active:scale-98 text-white font-medium text-sm shadow-sm transition"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Hızlı Not Ekle</span>
-        </button>
-      </div>
+      {(moduleSettings.showSchool || moduleSettings.showNotes) && (
+        <div>
+          <button
+            onClick={onOpenQuickNote}
+            className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-2xl bg-teal-600 hover:bg-teal-700 active:scale-98 text-white font-medium text-sm shadow-sm transition"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Hızlı Not Ekle</span>
+          </button>
+        </div>
+      )}
 
       {/* Main Responsive Grid for Cards on Wide Screens */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
         {/* YORGUNLUK DOSTU MOD: "BUGÜN NASILDI?" KARTI */}
-        <div className="rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 p-4.5 sm:p-5 shadow-sm space-y-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-2xl bg-teal-50 dark:bg-teal-950/60 text-teal-700 dark:text-teal-300 flex items-center justify-center">
-              <Coffee className="w-5 h-5" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100">
-                  Bugün nasıldı?
-                </h3>
-                {isEveningTime && (
-                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-teal-100 dark:bg-teal-950/80 text-teal-800 dark:text-teal-300">
-                    Akşam Değerlendirmesi
-                  </span>
-                )}
-              </div>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
-                Günün temposuna göre çalışma hedeflerinizi nazikçe uyarlayın
-              </p>
-            </div>
-          </div>
-
-          {todayCheckin && (
-            <span className="text-[11px] font-semibold px-2.5 py-1 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
-              {todayCheckin.rating === 'rahat' && '🌿 Rahat'}
-              {todayCheckin.rating === 'normal' && '⚖️ Normal'}
-              {todayCheckin.rating === 'yorucu' && '🛋️ Yorucu'}
-            </span>
-          )}
-        </div>
-
-        {/* 3 Mood Options Buttons */}
-        <div className="grid grid-cols-3 gap-2 pt-1">
-          <button
-            type="button"
-            disabled={isSubmittingCheckin}
-            onClick={() => handleSelectEnergy('rahat')}
-            className={`py-2.5 px-2 rounded-2xl border text-center transition active:scale-95 flex flex-col items-center justify-center gap-1 ${
-              todayCheckin?.rating === 'rahat'
-                ? 'bg-emerald-50 dark:bg-emerald-950/50 border-emerald-300 dark:border-emerald-700 text-emerald-900 dark:text-emerald-200 font-bold'
-                : 'bg-slate-50/60 dark:bg-slate-800/40 border-slate-200/80 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
-            }`}
-          >
-            <span className="text-lg">🌿</span>
-            <span className="text-xs">Rahat</span>
-          </button>
-
-          <button
-            type="button"
-            disabled={isSubmittingCheckin}
-            onClick={() => handleSelectEnergy('normal')}
-            className={`py-2.5 px-2 rounded-2xl border text-center transition active:scale-95 flex flex-col items-center justify-center gap-1 ${
-              todayCheckin?.rating === 'normal'
-                ? 'bg-sky-50 dark:bg-sky-950/50 border-sky-300 dark:border-sky-700 text-sky-900 dark:text-sky-200 font-bold'
-                : 'bg-slate-50/60 dark:bg-slate-800/40 border-slate-200/80 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
-            }`}
-          >
-            <span className="text-lg">⚖️</span>
-            <span className="text-xs">Normal</span>
-          </button>
-
-          <button
-            type="button"
-            disabled={isSubmittingCheckin}
-            onClick={() => handleSelectEnergy('yorucu')}
-            className={`py-2.5 px-2 rounded-2xl border text-center transition active:scale-95 flex flex-col items-center justify-center gap-1 ${
-              todayCheckin?.rating === 'yorucu'
-                ? 'bg-amber-50 dark:bg-amber-950/50 border-amber-300 dark:border-amber-700 text-amber-900 dark:text-amber-200 font-bold ring-2 ring-amber-500/20'
-                : 'bg-slate-50/60 dark:bg-slate-800/40 border-slate-200/80 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
-            }`}
-          >
-            <span className="text-lg">🛋️</span>
-            <span className="text-xs">Yorucu</span>
-          </button>
-        </div>
-
-        {/* If user marked 'yorucu' and has incomplete tasks, show quick prompt */}
-        {todayCheckin?.rating === 'yorucu' && incompleteTasks.length > 0 && (
-          <div className="p-3 rounded-2xl bg-amber-50/80 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/60 flex items-center justify-between gap-2 text-xs text-amber-900 dark:text-amber-200">
-            <span className="leading-snug">
-              Yorucu bir gün oldu. Kalan {incompleteTasks.length} görevi hafifletmek ister misiniz?
-            </span>
-            <button
-              onClick={() => setShowFatigueModal(true)}
-              className="px-3 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-semibold flex-shrink-0 transition active:scale-95"
-            >
-              Önerileri Gör
-            </button>
-          </div>
-        )}
-      </div>
-
-      {/* CARD 1: CUMA / HAFTALIK VELİ ARAMALARI KARTI */}
-      <div 
-        onClick={onOpenParentCalls}
-        className={`rounded-3xl border p-5 shadow-sm transition cursor-pointer select-none group touch-manipulation active:scale-[0.99] ${
-          isCallDayToday
-            ? 'bg-gradient-to-br from-amber-500/10 via-amber-500/5 to-white dark:from-amber-950/30 dark:via-slate-900 dark:to-slate-900 border-amber-300 dark:border-amber-800/80 shadow-amber-900/5'
-            : 'bg-white dark:bg-slate-900 border-slate-200/80 dark:border-slate-800 hover:border-amber-300'
-        }`}
-      >
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2.5">
-            <div className={`w-10 h-10 rounded-2xl flex items-center justify-center ${
-              isCallDayToday
-                ? 'bg-amber-500 text-white shadow-md shadow-amber-600/20'
-                : 'bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400'
-            }`}>
-              <PhoneCall className="w-5 h-5" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100">
-                  {targetDayName} Veli Aramaları
-                </h3>
-                {isCallDayToday && (
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500 text-white animate-pulse">
-                    Bugün Arama Günü
-                  </span>
-                )}
-              </div>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
-                Planlanan saat: {parentCallSettings.callTime}
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-1 text-xs font-semibold text-amber-700 dark:text-amber-400 group-hover:translate-x-0.5 transition-transform">
-            <span>Listeyi Aç</span>
-            <ArrowRight className="w-4 h-4" />
-          </div>
-        </div>
-
-        {/* Geçen haftadan kalan uyarısı */}
-        {missedCalls.length > 0 && (
-          <div className="mb-3 p-2.5 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 flex items-center gap-2 text-xs text-rose-800 dark:text-rose-300 font-semibold">
-            <AlertCircle className="w-4 h-4 text-rose-600 flex-shrink-0" />
-            <span>Geçen haftadan aranamayan {missedCalls.length} veli bulunuyor (Öncelikli)</span>
-          </div>
-        )}
-
-        {/* Progress & Stat */}
-        <div className="p-3.5 rounded-2xl bg-slate-50/80 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 space-y-2">
-          <div className="flex items-center justify-between text-xs">
-            <span className="font-semibold text-slate-700 dark:text-slate-200">
-              {totalToCall === 0
-                ? 'Kayıtlı öğrenci bulunmuyor'
-                : `${totalToCall} veliden ${calledCount} tanesi arandı`}
-            </span>
-            <span className="font-bold text-amber-600 dark:text-amber-400">%{progressPct}</span>
-          </div>
-
-          <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2 overflow-hidden">
-            <div
-              className="bg-amber-500 h-2 rounded-full transition-all duration-300"
-              style={{ width: `${progressPct}%` }}
-            />
-          </div>
-
-          <div className="flex items-center justify-between pt-1 text-[11px] text-slate-500 dark:text-slate-400">
-            <span>
-              {isCallDayToday
-                ? `Kalan: ${totalToCall - calledCount} veli`
-                : `Sonraki arama: ${targetDayName} ${parentCallSettings.callTime}`}
-            </span>
-            <span className="text-teal-600 dark:text-teal-400 font-medium">
-              Dokunarak aramaları yönetin →
-            </span>
-          </div>
-        </div>
-      </div>
-
-      {/* CARD 2: BUGÜNÜN ÇALIŞMA & DERS GÖREVLERİ KARTI (Aktif Modül) */}
-      <div className="rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 p-5 shadow-sm space-y-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="w-10 h-10 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
-              <BookOpen className="w-5 h-5" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100">
-                  Bugünün Çalışma Görevleri
-                </h3>
-                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
-                  {isSchoolDay ? '🏫 Okul Günü' : '🏖️ Boş Gün'}
-                </span>
-              </div>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
-                {todayTasks.length === 0
-                  ? 'Bugün için planlanan görev yok'
-                  : `${todayTasks.length} görevden ${completedStudyCount} tanesi tamamlandı`}
-              </p>
-            </div>
-          </div>
-
-          <button
-            onClick={() => onNavigateToStudy('plan')}
-            className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1"
-          >
-            <span>Tüm Program</span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </button>
-        </div>
-
-        {/* Progress Bar if tasks exist */}
-        {todayTasks.length > 0 && (
-          <div className="p-3 rounded-2xl bg-slate-50/80 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800 space-y-1.5">
-            <div className="flex items-center justify-between text-xs font-medium text-slate-600 dark:text-slate-300">
-              <span>{completedStudyCount} tamamlandı / {incompleteTasks.length} bekliyor</span>
-              <span className="font-bold text-indigo-600 dark:text-indigo-400">%{studyProgressPct}</span>
-            </div>
-            <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2 overflow-hidden">
-              <div
-                className="bg-indigo-600 h-2 rounded-full transition-all duration-300"
-                style={{ width: `${studyProgressPct}%` }}
-              />
-            </div>
-          </div>
-        )}
-
-        {/* Task List items */}
-        {todayTasks.length === 0 ? (
-          <div className="p-4 rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 text-center">
-            <p className="text-xs text-slate-400">Bugün için eklenmiş bir çalışma görevi bulunmuyor.</p>
-            <button
-              onClick={() => onOpenAddStudyTask()}
-              className="mt-2 text-xs text-indigo-600 dark:text-indigo-400 font-semibold hover:underline inline-flex items-center gap-1"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              <span>Yeni görev ekle</span>
-            </button>
-          </div>
-        ) : (
-          <div className="space-y-2">
-            {todayTasks.map((task) => {
-              const meta = getStudyTypeMeta(task.type);
-
-              return (
-                <div
-                  key={task.id}
-                  className={`p-3 rounded-2xl border transition flex items-center justify-between gap-3 ${
-                    task.completed
-                      ? 'bg-emerald-50/30 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-900/40'
-                      : 'bg-slate-50/60 dark:bg-slate-800/40 border-slate-100 dark:border-slate-800'
-                  }`}
-                >
-                  <div className="flex items-center gap-3 min-w-0 flex-1">
-                    <button
-                      type="button"
-                      onClick={() => onToggleTaskComplete(task.id, !task.completed)}
-                      className={`w-5 h-5 rounded-lg flex items-center justify-center border transition-all active:scale-90 flex-shrink-0 ${
-                        task.completed
-                          ? 'bg-emerald-600 border-emerald-600 text-white'
-                          : 'border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800'
-                      }`}
-                      aria-label="Görevi tamamla"
-                    >
-                      {task.completed && <Check className="w-3.5 h-3.5 stroke-[3]" />}
-                    </button>
-
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span
-                          className={`text-[9px] font-semibold px-1.5 py-0.2 rounded-md border ${meta.badgeBg} ${meta.badgeText}`}
-                        >
-                          {meta.label}
-                        </span>
-                        {task.time && (
-                          <span className="text-[10px] text-slate-400 flex items-center gap-0.5">
-                            <Clock className="w-2.5 h-2.5" /> {task.time}
-                          </span>
-                        )}
-                        {task.isReduced && (
-                          <span className="text-[9px] font-medium text-amber-600 dark:text-amber-400">
-                            (Hafifletildi)
-                          </span>
-                        )}
-                      </div>
-                      <div
-                        className={`text-xs font-bold text-slate-800 dark:text-slate-100 truncate mt-0.5 ${
-                          task.completed ? 'line-through text-slate-400 dark:text-slate-500' : ''
-                        }`}
-                      >
-                        {task.title}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Pomodoro Start Button */}
-                  <button
-                    type="button"
-                    onClick={() => onStartPomodoro(task)}
-                    className="p-1.5 px-2.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/60 dark:hover:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300 text-xs font-medium flex items-center gap-1 active:scale-95 transition flex-shrink-0"
-                    title="Sayacı Başlat"
-                  >
-                    <Play className="w-3 h-3 fill-current" />
-                    <span>{task.targetDurationMinutes} dk</span>
-                  </button>
-                </div>
-              );
-            })}
-          </div>
-        )}
-
-        {/* Gün sonunda yapılmayan görevler için aksiyon paneli (Otomatik kaydırmaz, onay ister) */}
-        {incompleteTasks.length > 0 && (
-          <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
-            <button
-              onClick={() => setShowIncompleteActions(!showIncompleteActions)}
-              className="w-full flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 py-1"
-            >
-              <span className="font-semibold text-amber-700 dark:text-amber-400">
-                ⚠️ Yapılmayan {incompleteTasks.length} görev var. Ne yapmak istersiniz?
-              </span>
-              {showIncompleteActions ? (
-                <ChevronUp className="w-4 h-4" />
-              ) : (
-                <ChevronDown className="w-4 h-4" />
-              )}
-            </button>
-
-            {showIncompleteActions && (
-              <div className="mt-2.5 p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-2 text-xs">
-                <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                  Otomatik erteleme yapılmaz, tercih size aittir:
-                </p>
-
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => onPostponeIncompleteTasks('tomorrow')}
-                    className="p-2 rounded-xl bg-white dark:bg-slate-700 hover:bg-slate-100 dark:hover:bg-slate-650 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200 font-semibold text-center transition active:scale-95 flex items-center justify-center gap-1.5"
-                  >
-                    <MoveRight className="w-3.5 h-3.5 text-indigo-600" />
-                    <span>Yarına Kaydır</span>
-                  </button>
-
-                  <div className="flex items-center gap-1 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl p-1">
-                    <select
-                      value={selectedTargetDay}
-                      onChange={(e) => setSelectedTargetDay(parseInt(e.target.value, 10))}
-                      className="bg-transparent text-[11px] font-semibold text-slate-700 dark:text-slate-200 flex-1 px-1 focus:outline-none"
-                    >
-                      <option value={6}>Cumartesi</option>
-                      <option value={0}>Pazar</option>
-                      <option value={1}>Pazartesi</option>
-                      <option value={2}>Salı</option>
-                    </select>
-                    <button
-                      type="button"
-                      onClick={() => onPostponeIncompleteTasks('target_day', selectedTargetDay)}
-                      className="px-2 py-1 rounded-lg bg-indigo-600 text-white font-semibold text-[10px] active:scale-95"
-                    >
-                      Koy
-                    </button>
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={() => onPostponeIncompleteTasks('delete')}
-                    className="p-2 rounded-xl bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-900/60 border border-rose-200 dark:border-rose-900 text-rose-700 dark:text-rose-300 font-semibold text-center transition active:scale-95 flex items-center justify-center gap-1.5"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                    <span>Görevleri Sil</span>
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-
-      {/* Card 2.5: İNGİLİZCE KELİME KARTLARI & GÜNLÜK HEDEF KARTI */}
-      {(() => {
-        const dueEnglishCards = englishCards.filter((c) => isCardDueToday(c, todayStr));
-        const todayLearned = englishCards.filter((c) => c.learnedDate === todayStr).length;
-        const targetGoal = (isTiring && englishSettings?.reduceGoalOnFatigue)
-          ? Math.max(1, Math.round((englishSettings?.dailyNewWordGoal || 5) / 2))
-          : (englishSettings?.dailyNewWordGoal || 5);
-        const goalPct = Math.min(100, Math.round((todayLearned / Math.max(1, targetGoal)) * 100));
-
-        return (
-          <div className="rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 p-4.5 sm:p-5 shadow-sm space-y-3.5">
+        {(moduleSettings.showStudy || moduleSettings.showEnglish) && (
+          <div className="rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 p-4.5 sm:p-5 shadow-sm space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2.5">
-                <div className="w-10 h-10 rounded-2xl bg-sky-50 dark:bg-sky-950/60 text-sky-600 dark:text-sky-400 flex items-center justify-center">
-                  <Languages className="w-5 h-5" />
+                <div className="w-9 h-9 rounded-2xl bg-teal-50 dark:bg-teal-950/60 text-teal-700 dark:text-teal-300 flex items-center justify-center">
+                  <Coffee className="w-5 h-5" />
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
                     <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100">
-                      İngilizce Kelime Hedefi
+                      Bugün nasıldı?
                     </h3>
-                    {isTiring && englishSettings?.reduceGoalOnFatigue && (
-                      <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300">
-                        🌱 Yorgunluk Dostu Hedef
+                    {isEveningTime && (
+                      <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-teal-100 dark:bg-teal-950/80 text-teal-800 dark:text-teal-300">
+                        Akşam Değerlendirmesi
                       </span>
                     )}
                   </div>
                   <p className="text-xs text-slate-500 dark:text-slate-400">
-                    Bugün {todayLearned}/{targetGoal} yeni kelime • {dueEnglishCards.length} kart tekrar bekliyor
+                    Günün temposuna göre çalışma hedeflerinizi nazikçe uyarlayın
                   </p>
                 </div>
               </div>
 
-              {onNavigateToEnglish && (
-                <button
-                  onClick={onNavigateToEnglish}
-                  className="text-xs font-semibold text-sky-600 dark:text-sky-400 hover:underline flex items-center gap-1"
-                >
-                  <span>Çalış</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </button>
+              {todayCheckin && (
+                <span className="text-[11px] font-semibold px-2.5 py-1 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                  {todayCheckin.rating === 'rahat' && '🌿 Rahat'}
+                  {todayCheckin.rating === 'normal' && '⚖️ Normal'}
+                  {todayCheckin.rating === 'yorucu' && '🛋️ Yorucu'}
+                </span>
               )}
             </div>
 
-            {/* Mini Progress Bar */}
-            <div className="p-3 rounded-2xl bg-slate-50/80 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800 space-y-1.5">
-              <div className="flex items-center justify-between text-xs font-medium text-slate-600 dark:text-slate-300">
-                <span>Bugün {todayLearned}/{targetGoal} yeni kelime</span>
-                <span className="font-bold text-sky-600 dark:text-sky-400">%{goalPct}</span>
+            {/* 3 Mood Options Buttons */}
+            <div className="grid grid-cols-3 gap-2 pt-1">
+              <button
+                type="button"
+                disabled={isSubmittingCheckin}
+                onClick={() => handleSelectEnergy('rahat')}
+                className={`py-2.5 px-2 rounded-2xl border text-center transition active:scale-95 flex flex-col items-center justify-center gap-1 ${
+                  todayCheckin?.rating === 'rahat'
+                    ? 'bg-emerald-50 dark:bg-emerald-950/50 border-emerald-300 dark:border-emerald-700 text-emerald-900 dark:text-emerald-200 font-bold'
+                    : 'bg-slate-50/60 dark:bg-slate-800/40 border-slate-200/80 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
+                }`}
+              >
+                <span className="text-lg">🌿</span>
+                <span className="text-xs">Rahat</span>
+              </button>
+
+              <button
+                type="button"
+                disabled={isSubmittingCheckin}
+                onClick={() => handleSelectEnergy('normal')}
+                className={`py-2.5 px-2 rounded-2xl border text-center transition active:scale-95 flex flex-col items-center justify-center gap-1 ${
+                  todayCheckin?.rating === 'normal'
+                    ? 'bg-sky-50 dark:bg-sky-950/50 border-sky-300 dark:border-sky-700 text-sky-900 dark:text-sky-200 font-bold'
+                    : 'bg-slate-50/60 dark:bg-slate-800/40 border-slate-200/80 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
+                }`}
+              >
+                <span className="text-lg">⚖️</span>
+                <span className="text-xs">Normal</span>
+              </button>
+
+              <button
+                type="button"
+                disabled={isSubmittingCheckin}
+                onClick={() => handleSelectEnergy('yorucu')}
+                className={`py-2.5 px-2 rounded-2xl border text-center transition active:scale-95 flex flex-col items-center justify-center gap-1 ${
+                  todayCheckin?.rating === 'yorucu'
+                    ? 'bg-amber-50 dark:bg-amber-950/50 border-amber-300 dark:border-amber-700 text-amber-900 dark:text-amber-200 font-bold ring-2 ring-amber-500/20'
+                    : 'bg-slate-50/60 dark:bg-slate-800/40 border-slate-200/80 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
+                }`}
+              >
+                <span className="text-lg">🛋️</span>
+                <span className="text-xs">Yorucu</span>
+              </button>
+            </div>
+
+            {/* If user marked 'yorucu' and has incomplete tasks, show quick prompt */}
+            {todayCheckin?.rating === 'yorucu' && incompleteTasks.length > 0 && moduleSettings.showStudy && (
+              <div className="p-3 rounded-2xl bg-amber-50/80 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/60 flex items-center justify-between gap-2 text-xs text-amber-900 dark:text-amber-200">
+                <span className="leading-snug">
+                  Yorucu bir gün oldu. Kalan {incompleteTasks.length} görevi hafifletmek ister misiniz?
+                </span>
+                <button
+                  onClick={() => setShowFatigueModal(true)}
+                  className="px-3 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-semibold flex-shrink-0 transition active:scale-95"
+                >
+                  Önerileri Gör
+                </button>
               </div>
+            )}
+          </div>
+        )}
+
+        {/* CARD 1: CUMA / HAFTALIK VELİ ARAMALARI KARTI */}
+        {moduleSettings.showSchool && (
+          <div 
+            onClick={onOpenParentCalls}
+            className={`rounded-3xl border p-5 shadow-sm transition cursor-pointer select-none group touch-manipulation active:scale-[0.99] ${
+              isCallDayToday
+                ? 'bg-gradient-to-br from-amber-500/10 via-amber-500/5 to-white dark:from-amber-950/30 dark:via-slate-900 dark:to-slate-900 border-amber-300 dark:border-amber-800/80 shadow-amber-900/5'
+                : 'bg-white dark:bg-slate-900 border-slate-200/80 dark:border-slate-800 hover:border-amber-300'
+            }`}
+          >
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2.5">
+                <div className={`w-10 h-10 rounded-2xl flex items-center justify-center ${
+                  isCallDayToday
+                    ? 'bg-amber-500 text-white shadow-md shadow-amber-600/20'
+                    : 'bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400'
+                }`}>
+                  <PhoneCall className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100">
+                      {targetDayName} Veli Aramaları
+                    </h3>
+                    {isCallDayToday && (
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500 text-white animate-pulse">
+                        Bugün Arama Günü
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    Planlanan saat: {parentCallSettings.callTime}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-1 text-xs font-semibold text-amber-700 dark:text-amber-400 group-hover:translate-x-0.5 transition-transform">
+                <span>Listeyi Aç</span>
+                <ArrowRight className="w-4 h-4" />
+              </div>
+            </div>
+
+            {/* Geçen haftadan kalan uyarısı */}
+            {missedCalls.length > 0 && (
+              <div className="mb-3 p-2.5 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 flex items-center gap-2 text-xs text-rose-800 dark:text-rose-300 font-semibold">
+                <AlertCircle className="w-4 h-4 text-rose-600 flex-shrink-0" />
+                <span>Geçen haftadan aranamayan {missedCalls.length} veli bulunuyor (Öncelikli)</span>
+              </div>
+            )}
+
+            {/* Progress & Stat */}
+            <div className="p-3.5 rounded-2xl bg-slate-50/80 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 space-y-2">
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-semibold text-slate-700 dark:text-slate-200">
+                  {totalToCall === 0
+                    ? 'Kayıtlı öğrenci bulunmuyor'
+                    : `${totalToCall} veliden ${calledCount} tanesi arandı`}
+                </span>
+                <span className="font-bold text-amber-600 dark:text-amber-400">%{progressPct}</span>
+              </div>
+
               <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2 overflow-hidden">
                 <div
-                  className="bg-sky-500 h-2 rounded-full transition-all duration-300"
-                  style={{ width: `${goalPct}%` }}
+                  className="bg-amber-500 h-2 rounded-full transition-all duration-300"
+                  style={{ width: `${progressPct}%` }}
                 />
               </div>
-            </div>
 
-            {/* Quick Actions / Status */}
-            <div className="flex items-center justify-between pt-1">
-              <div className="text-xs text-slate-500 dark:text-slate-400">
-                {dueEnglishCards.length > 0 ? (
-                  <span className="text-amber-600 dark:text-amber-400 font-semibold">
-                    🔔 Bugün tekrar edilecek {dueEnglishCards.length} kelime kartı var.
-                  </span>
-                ) : (
-                  <span className="text-emerald-600 dark:text-emerald-400 font-medium">
-                    ✓ Bugünün tüm tekrarları güncel.
-                  </span>
-                )}
+              <div className="flex items-center justify-between pt-1 text-[11px] text-slate-500 dark:text-slate-400">
+                <span>
+                  {isCallDayToday
+                    ? `Kalan: ${totalToCall - calledCount} veli`
+                    : `Sonraki arama: ${targetDayName} ${parentCallSettings.callTime}`}
+                </span>
+                <span className="text-teal-600 dark:text-teal-400 font-medium">
+                  Dokunarak aramaları yönetin →
+                </span>
               </div>
-
-              {onNavigateToEnglish && (
-                <button
-                  onClick={onNavigateToEnglish}
-                  className="px-3.5 py-1.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white text-xs font-semibold shadow-xs active:scale-95 transition"
-                >
-                  {dueEnglishCards.length > 0 ? 'Tekrarı Başlat' : 'Kelime Ekle'}
-                </button>
-              )}
             </div>
           </div>
-        );
-      })()}
+        )}
 
-      {/* Card 2.7: ÜNİVERSİTE SINAV GERİ SAYIMI & SONUÇ SORUSU KARTLARI */}
-      {(() => {
-        const courseMap = new Map(universityCourses.map((c) => [c.id, c]));
-
-        // 1. Upcoming exams countdown (closest up to 3)
-        const upcomingExamsAll = universityExams
-          .filter((e) => {
-            const cd = getExamCountdown(e, todayStr);
-            return !cd.isPast;
-          })
-          .sort((a, b) => a.date.localeCompare(b.date));
-
-        // Ortak sınav tarihiyle oluşturulan sınavlar (tüm dersler aynı gün) tek satırda gösterilir
-        const seenCommonKeys = new Set<string>();
-        const upcomingExams = upcomingExamsAll
-          .filter((e) => {
-            if (!e.commonGroup) return true;
-            const key = `${e.commonGroup}-${e.date}`;
-            if (seenCommonKeys.has(key)) return false;
-            seenCommonKeys.add(key);
-            return true;
-          })
-          .slice(0, 3);
-        const commonCourseCount = (e: UniversityExam) =>
-          e.commonGroup
-            ? upcomingExamsAll.filter((x) => x.commonGroup === e.commonGroup && x.date === e.date).length
-            : 0;
-
-        // 2. Exams eligible for result inquiry question ("Sonuç açıklandı mı?")
-        const resultInquiryExams = universityExams.filter((e) => {
-          const cd = getExamCountdown(e, todayStr);
-          return cd.isResultPromptEligible;
-        });
-
-        // 3. Exams with 3 days or fewer asking "Çalışma görevi eklemek ister misin?"
-        const studyPromptExams = upcomingExams.filter((e) => {
-          const cd = getExamCountdown(e, todayStr);
-          return cd.isStudyPromptEligible;
-        });
-
-        if (upcomingExams.length === 0 && resultInquiryExams.length === 0) {
-          return null;
-        }
-
-        return (
-          <div className="space-y-3">
-            {/* Sınav Sonucu Soru Kartları (Sonuç açıklandı mı?) */}
-            {resultInquiryExams.map((exam) => {
-              const course = courseMap.get(exam.courseId);
-              const courseName = course?.name || 'Üniversite Dersi';
-              const examTitle = exam.title || getExamTypeTitle(exam.examType);
-
-              return (
-                <div
-                  key={`result-prompt-${exam.id}`}
-                  className="rounded-3xl bg-teal-50/90 dark:bg-teal-950/40 border border-teal-200 dark:border-teal-800/80 p-4 sm:p-5 shadow-sm space-y-3 animate-in fade-in duration-200"
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-10 h-10 rounded-2xl bg-teal-100 dark:bg-teal-900/60 text-teal-700 dark:text-teal-300 flex items-center justify-center flex-shrink-0">
-                        <HelpCircle className="w-5 h-5" />
-                      </div>
-                      <div>
-                        <div className="text-[11px] font-bold text-teal-700 dark:text-teal-300 uppercase tracking-wide">
-                          Sınav Sonucu Takibi
-                        </div>
-                        <h4 className="text-sm font-bold text-slate-800 dark:text-slate-100">
-                          "{courseName}" {examTitle} sonucu açıklandı mı?
-                        </h4>
-                        <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                          Sınav Tarihi: {exam.date}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-2 pt-1">
-                    <button
-                      type="button"
-                      onClick={() => setActiveResultModalExam(exam)}
-                      className="flex-1 py-2 px-3 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-semibold text-xs shadow-xs active:scale-95 transition text-center"
-                    >
-                      Açıklandı (Sonucu Gir) ✓
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (onPostponeExamResultPrompt) {
-                          onPostponeExamResultPrompt(exam.id);
-                        }
-                      }}
-                      className="py-2 px-3 rounded-xl border border-teal-300 dark:border-teal-700 bg-white dark:bg-slate-800 text-teal-800 dark:text-teal-200 font-semibold text-xs hover:bg-teal-50 dark:hover:bg-teal-950/60 transition active:scale-95"
-                    >
-                      Daha değil (Yarın tekrar sor)
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
-
-            {/* Yaklaşan Sınavlar Geri Sayım Kartı */}
-            {upcomingExams.length > 0 && (() => {
-              const primaryExam = upcomingExams[0];
-              const primaryCourse = courseMap.get(primaryExam.courseId);
-              const primaryIsCommon = !!primaryExam.commonGroup;
-              const primaryCourseName = primaryIsCommon
-                ? `Tüm dersler (${commonCourseCount(primaryExam)} ders)`
-                : primaryCourse?.name || 'Üniversite Dersi';
-              const primaryCountdown = getExamCountdown(primaryExam, todayStr);
-              const isUrgent = primaryCountdown.isImminent; // 7 days or fewer
-
-              return (
-                <div
-                  className={`rounded-3xl border p-4.5 sm:p-5 shadow-sm space-y-3.5 transition ${
-                    isUrgent
-                      ? 'bg-amber-50/70 dark:bg-amber-950/20 border-amber-200 dark:border-amber-900/60'
-                      : 'bg-white dark:bg-slate-900 border-indigo-100 dark:border-slate-800'
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2.5">
-                      <div
-                        className={`w-9 h-9 rounded-2xl flex items-center justify-center ${
-                          isUrgent
-                            ? 'bg-amber-100 text-amber-800 dark:bg-amber-950/80 dark:text-amber-300'
-                            : 'bg-indigo-50 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300'
-                        }`}
-                      >
-                        <GraduationCap className="w-5 h-5" />
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100">
-                            {primaryIsCommon ? 'Üniversite Sınavlarına Kalan Süre' : 'En Yakın Üniversite Sınavı'}
-                          </h3>
-                          {isUrgent && (
-                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-200/80 dark:bg-amber-900/80 text-amber-900 dark:text-amber-200">
-                              Yaklaşıyor
-                            </span>
-                          )}
-                        </div>
-                        <p className="text-xs text-slate-500 dark:text-slate-400">
-                          {primaryCourseName} • {primaryExam.title || getExamTypeTitle(primaryExam.examType)}
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* .ics export button */}
-                    <div className="flex items-center gap-1.5">
-                      <button
-                        type="button"
-                        onClick={() => generateExamIcsFile(primaryExam, primaryCourseName)}
-                        className="p-2 rounded-xl text-slate-500 hover:text-indigo-600 hover:bg-white/80 dark:hover:bg-slate-800 transition"
-                        title="Takvime Ekle (.ics)"
-                      >
-                        <Download className="w-4 h-4" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (onNavigateToStudy) {
-                            onNavigateToStudy('sinavlar');
-                          } else if (onNavigateToUniversity) {
-                            onNavigateToUniversity();
-                          }
-                        }}
-                        className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-0.5"
-                      >
-                        <span>Tümü</span>
-                        <ArrowRight className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Primary Countdown Banner */}
-                  <div className="p-3.5 rounded-2xl bg-white/80 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700 flex items-center justify-between gap-3">
-                    <div>
-                      <div className="font-bold text-slate-800 dark:text-slate-100 text-xs">
-                        {!primaryIsCommon && primaryCourse?.code ? `${primaryCourse.code} - ` : ''}{primaryCourseName}
-                      </div>
-                      <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 flex items-center gap-2">
-                        <span className="font-mono">{primaryExam.date}</span>
-                        {primaryExam.time && <span>• Saat: {primaryExam.time}</span>}
-                      </div>
-                    </div>
-
-                    <div
-                      className={`rounded-xl font-bold flex-shrink-0 ${
-                        primaryIsCommon ? 'px-4 py-2 text-sm' : 'px-3 py-1.5 text-xs'
-                      } ${
-                        isUrgent
-                          ? 'bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-200'
-                          : 'bg-indigo-50 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300'
-                      }`}
-                    >
-                      {primaryCountdown.label}
-                    </div>
-                  </div>
-
-                  {/* 3 gün kala çalışma görevi ekleme sorusu */}
-                  {primaryCountdown.isStudyPromptEligible && (
-                    <div className="p-3 rounded-2xl bg-indigo-50/70 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800/80 text-xs space-y-2">
-                      <div className="flex items-center gap-2 font-semibold text-indigo-950 dark:text-indigo-200">
-                        <Sparkles className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
-                        <span>Bu sınav için çalışma görevi eklemek ister misin?</span>
-                      </div>
-                      <p className="text-[11px] text-slate-600 dark:text-slate-400">
-                        {primaryCountdown.label}. İstersen Çalışma sekmesindeki programa otomatik ekleme yapmadan, senin onayına göre görev ekleyelim.
-                      </p>
-                      <div className="flex items-center gap-2 pt-1">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            if (onAddExamStudyTasks) {
-                              onAddExamStudyTasks(primaryExam, primaryCourseName);
-                            } else {
-                              onOpenAddStudyTask(`${primaryCourseName} Sınav Tekrarı`);
-                            }
-                          }}
-                          className="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-[11px] transition active:scale-95"
-                        >
-                          Evet, Görev Ekle
-                        </button>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Up to 3 exams list if multiple */}
-                  {upcomingExams.length > 1 && (
-                    <div className="space-y-1.5 pt-1 border-t border-slate-100 dark:border-slate-800">
-                      <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                        Diğer Yaklaşan Sınavlar
-                      </div>
-                      {upcomingExams.slice(1).map((exam) => {
-                        const course = courseMap.get(exam.courseId);
-                        const cName = exam.commonGroup
-                          ? `Tüm dersler (${commonCourseCount(exam)} ders)`
-                          : course?.name || 'Üniversite Dersi';
-                        const cd = getExamCountdown(exam, todayStr);
-
-                        return (
-                          <div
-                            key={exam.id}
-                            className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-850 flex items-center justify-between text-xs"
-                          >
-                            <span className="font-semibold text-slate-700 dark:text-slate-300 truncate max-w-[200px]">
-                              {cName}
-                            </span>
-                            <div className="flex items-center gap-2 text-[11px] text-slate-500">
-                              <span className="font-mono">{exam.date}</span>
-                              <span className="font-bold text-indigo-600 dark:text-indigo-400">{cd.label}</span>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-              );
-            })()}
-          </div>
-        );
-      })()}
-
-      {/* FİKİRLER KARTI (Yapılıyor projeler ve son güncellenen fikirler birleşik) */}
-      {(() => {
-        const getStatusMeta = (status: string) => {
-          switch (status) {
-            case 'yapiliyor':
-              return { label: 'Yapılıyor', bg: 'bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 border-amber-300 dark:border-amber-800' };
-            case 'fikir':
-              return { label: 'Fikir', bg: 'bg-blue-100 dark:bg-blue-950 text-blue-800 dark:text-blue-300 border-blue-300 dark:border-blue-800' };
-            case 'arastirma':
-              return { label: 'Araştırma', bg: 'bg-purple-100 dark:bg-purple-950 text-purple-800 dark:text-purple-300 border-purple-300 dark:border-purple-800' };
-            case 'yayinda':
-              return { label: 'Yayında', bg: 'bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800' };
-            default:
-              return { label: 'Fikir', bg: 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-700' };
-          }
-        };
-
-        const inProgressIdeas = projectIdeas.filter((i) => i.status === 'yapiliyor');
-        const otherIdeas = projectIdeas
-          .filter((i) => i.status !== 'yapiliyor' && i.status !== 'rafa_kaldirildi')
-          .sort((a, b) => {
-            if (a.isStarred !== b.isStarred) return a.isStarred ? -1 : 1;
-            return b.updatedAt - a.updatedAt;
-          });
-
-        const displayedInProgress = inProgressIdeas.slice(0, 3);
-        const remainingSlots = Math.max(0, 3 - displayedInProgress.length);
-        const displayedOther = otherIdeas.slice(0, remainingSlots);
-        const hasAnyIdeas = projectIdeas.length > 0;
-
-        return (
+        {/* CARD 2: BUGÜNÜN ÇALIŞMA & DERS GÖREVLERİ KARTI */}
+        {moduleSettings.showStudy && (
           <div className="rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 p-5 shadow-sm space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center">
-                  <Lightbulb className="w-5 h-5" />
+                <div className="w-10 h-10 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
+                  <BookOpen className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100">
-                    Fikirler
-                  </h3>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100">
+                      Bugünün Çalışma Görevleri
+                    </h3>
+                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                      {isSchoolDay ? '🏫 Okul Günü' : '🏖️ Boş Gün'}
+                    </span>
+                  </div>
                   <p className="text-xs text-slate-500 dark:text-slate-400">
-                    Geliştirme projeleri ve fikir havuzu
+                    {todayTasks.length === 0
+                      ? 'Bugün için planlanan görev yok'
+                      : `${todayTasks.length} görevden ${completedStudyCount} tanesi tamamlandı`}
                   </p>
                 </div>
               </div>
-              {hasAnyIdeas && onNavigateToIdeas && (
-                <button
-                  type="button"
-                  onClick={() => onNavigateToIdeas()}
-                  className="text-xs text-amber-600 dark:text-amber-400 hover:underline font-medium flex items-center gap-1"
-                >
-                  <span>Tümü</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </button>
-              )}
+
+              <button
+                onClick={() => onNavigateToStudy('plan')}
+                className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1"
+              >
+                <span>Tüm Program</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
             </div>
 
-            {!hasAnyIdeas ? (
-              <div className="rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 p-6 text-center text-slate-400 dark:text-slate-500">
-                <p className="text-xs">Henüz eklenmiş fikir veya proje yok.</p>
-                {onNavigateToIdeas && (
-                  <button
-                    type="button"
-                    onClick={() => onNavigateToIdeas()}
-                    className="mt-2 text-xs text-amber-600 dark:text-amber-400 font-medium hover:underline"
-                  >
-                    İlk fikrini ekle →
-                  </button>
-                )}
+            {/* Progress Bar if tasks exist */}
+            {todayTasks.length > 0 && (
+              <div className="p-3 rounded-2xl bg-slate-50/80 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800 space-y-1.5">
+                <div className="flex items-center justify-between text-xs font-medium text-slate-600 dark:text-slate-300">
+                  <span>{completedStudyCount} tamamlandı / {incompleteTasks.length} bekliyor</span>
+                  <span className="font-bold text-indigo-600 dark:text-indigo-400">%{studyProgressPct}</span>
+                </div>
+                <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2 overflow-hidden">
+                  <div
+                    className="bg-indigo-600 h-2 rounded-full transition-all duration-300"
+                    style={{ width: `${studyProgressPct}%` }}
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Task List items */}
+            {todayTasks.length === 0 ? (
+              <div className="p-4 rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 text-center">
+                <p className="text-xs text-slate-400">Bugün için eklenmiş bir çalışma görevi bulunmuyor.</p>
+                <button
+                  onClick={() => onOpenAddStudyTask()}
+                  className="mt-2 text-xs text-indigo-600 dark:text-indigo-400 font-semibold hover:underline inline-flex items-center gap-1"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Yeni görev ekle</span>
+                </button>
               </div>
             ) : (
               <div className="space-y-2">
-                {/* 1. Önce Yapılıyor Durumundaki Projeler */}
-                {displayedInProgress.map((idea) => {
-                  const totalTodos = idea.todos?.length || 0;
-                  const completedTodos = idea.todos?.filter((t) => t.completed).length || 0;
-                  const percent = totalTodos > 0 ? Math.round((completedTodos / totalTodos) * 100) : null;
-                  const meta = getStatusMeta(idea.status);
+                {todayTasks.map((task) => {
+                  const meta = getStudyTypeMeta(task.type);
 
                   return (
-                    <button
-                      key={idea.id}
-                      type="button"
-                      onClick={() => onNavigateToIdeas && onNavigateToIdeas(idea.id)}
-                      className="w-full text-left p-3 rounded-2xl bg-amber-50/60 hover:bg-amber-100/50 dark:bg-amber-950/20 dark:hover:bg-amber-950/40 border border-amber-200/70 dark:border-amber-900/40 transition group space-y-1.5"
+                    <div
+                      key={task.id}
+                      className={`p-3 rounded-2xl border transition flex items-center justify-between gap-3 ${
+                        task.completed
+                          ? 'bg-emerald-50/30 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-900/40'
+                          : 'bg-slate-50/60 dark:bg-slate-800/40 border-slate-100 dark:border-slate-800'
+                      }`}
                     >
-                      <div className="flex items-center justify-between gap-2">
-                        <div className="flex items-center gap-1.5 min-w-0">
-                          <span className="text-xs font-bold text-slate-900 dark:text-white truncate group-hover:text-amber-600 transition">
-                            {idea.title}
-                          </span>
-                          {idea.isStarred && <Star className="w-3 h-3 fill-amber-500 text-amber-500 flex-shrink-0" />}
-                        </div>
+                      <div className="flex items-center gap-3 min-w-0 flex-1">
+                        <button
+                          type="button"
+                          onClick={() => onToggleTaskComplete(task.id, !task.completed)}
+                          className={`w-5 h-5 rounded-lg flex items-center justify-center border transition-all active:scale-90 flex-shrink-0 ${
+                            task.completed
+                              ? 'bg-emerald-600 border-emerald-600 text-white'
+                              : 'border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800'
+                          }`}
+                          aria-label="Görevi tamamla"
+                        >
+                          {task.completed && <Check className="w-3.5 h-3.5 stroke-[3]" />}
+                        </button>
 
-                        <div className="flex items-center gap-1.5 flex-shrink-0">
-                          {percent !== null && (
-                            <span className="text-[10px] font-bold text-amber-800 dark:text-amber-300 px-1.5 py-0.5 rounded-md bg-amber-100/80 dark:bg-amber-900/60">
-                              %{percent}
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span
+                              className={`text-[9px] font-semibold px-1.5 py-0.2 rounded-md border ${meta.badgeBg} ${meta.badgeText}`}
+                            >
+                              {meta.label}
                             </span>
-                          )}
-                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${meta.bg}`}>
-                            {meta.label}
-                          </span>
+                            {task.time && (
+                              <span className="text-[10px] text-slate-400 flex items-center gap-0.5">
+                                <Clock className="w-2.5 h-2.5" /> {task.time}
+                              </span>
+                            )}
+                            {task.isReduced && (
+                              <span className="text-[9px] font-medium text-amber-600 dark:text-amber-400">
+                                (Hafifletildi)
+                              </span>
+                            )}
+                          </div>
+                          <div
+                            className={`text-xs font-bold text-slate-800 dark:text-slate-100 truncate mt-0.5 ${
+                              task.completed ? 'line-through text-slate-400 dark:text-slate-500' : ''
+                            }`}
+                          >
+                            {task.title}
+                          </div>
                         </div>
                       </div>
 
-                      {idea.nextStep ? (
-                        <p className="text-xs text-slate-700 dark:text-slate-300 font-medium flex items-center gap-1.5 line-clamp-1">
-                          <span className="text-amber-600 dark:text-amber-400 font-bold text-[11px] flex-shrink-0">
-                            Sonraki Adım:
-                          </span>
-                          <span className="truncate">{idea.nextStep}</span>
-                        </p>
-                      ) : (
-                        <p className="text-[11px] text-slate-400 italic">
-                          Sonraki adım eklenmedi
-                        </p>
-                      )}
-                    </button>
-                  );
-                })}
-
-                {/* 2. Altında Diğer Fikirler (Yıldızlılar önce, son güncellenenler) */}
-                {displayedOther.map((idea) => {
-                  const meta = getStatusMeta(idea.status);
-
-                  return (
-                    <button
-                      key={idea.id}
-                      type="button"
-                      onClick={() => onNavigateToIdeas && onNavigateToIdeas(idea.id)}
-                      className="w-full text-left p-3 rounded-2xl bg-slate-50 hover:bg-slate-100 dark:bg-slate-800/40 dark:hover:bg-slate-800 transition border border-slate-100 dark:border-slate-800 group"
-                    >
-                      <div className="flex items-center justify-between gap-2">
-                        <div className="flex items-center gap-1.5 min-w-0">
-                          <span className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate group-hover:text-amber-600 dark:group-hover:text-amber-400 transition">
-                            {idea.title}
-                          </span>
-                          {idea.isStarred && <Star className="w-3 h-3 fill-amber-500 text-amber-500 flex-shrink-0" />}
-                        </div>
-
-                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border flex-shrink-0 ${meta.bg}`}>
-                          {meta.label}
-                        </span>
-                      </div>
-                    </button>
+                      {/* Pomodoro Start Button */}
+                      <button
+                        type="button"
+                        onClick={() => onStartPomodoro(task)}
+                        className="p-1.5 px-2.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/60 dark:hover:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300 text-xs font-medium flex items-center gap-1 active:scale-95 transition flex-shrink-0"
+                        title="Sayacı Başlat"
+                      >
+                        <Play className="w-3 h-3 fill-current" />
+                        <span>{task.targetDurationMinutes} dk</span>
+                      </button>
+                    </div>
                   );
                 })}
               </div>
             )}
+
+            {/* Gün sonunda yapılmayan görevler için aksiyon paneli (Otomatik kaydırmaz, onay ister) */}
+            {incompleteTasks.length > 0 && (
+              <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
+                <button
+                  onClick={() => setShowIncompleteActions(!showIncompleteActions)}
+                  className="w-full flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 py-1"
+                >
+                  <span className="font-semibold text-amber-700 dark:text-amber-400">
+                    ⚠️ Yapılmayan {incompleteTasks.length} görev var. Ne yapmak istersiniz?
+                  </span>
+                  {showIncompleteActions ? (
+                    <ChevronUp className="w-4 h-4" />
+                  ) : (
+                    <ChevronDown className="w-4 h-4" />
+                  )}
+                </button>
+
+                {showIncompleteActions && (
+                  <div className="mt-2.5 p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-2 text-xs">
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                      Otomatik erteleme yapılmaz, tercih size aittir:
+                    </p>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => onPostponeIncompleteTasks('tomorrow')}
+                        className="p-2 rounded-xl bg-white dark:bg-slate-700 hover:bg-slate-100 dark:hover:bg-slate-650 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200 font-semibold text-center transition active:scale-95 flex items-center justify-center gap-1.5"
+                      >
+                        <MoveRight className="w-3.5 h-3.5 text-indigo-600" />
+                        <span>Yarına Kaydır</span>
+                      </button>
+
+                      <div className="flex items-center gap-1 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl p-1">
+                        <select
+                          value={selectedTargetDay}
+                          onChange={(e) => setSelectedTargetDay(parseInt(e.target.value, 10))}
+                          className="bg-transparent text-[11px] font-semibold text-slate-700 dark:text-slate-200 flex-1 px-1 focus:outline-none"
+                        >
+                          <option value={6}>Cumartesi</option>
+                          <option value={0}>Pazar</option>
+                          <option value={1}>Pazartesi</option>
+                          <option value={2}>Salı</option>
+                        </select>
+                        <button
+                          type="button"
+                          onClick={() => onPostponeIncompleteTasks('target_day', selectedTargetDay)}
+                          className="px-2 py-1 rounded-lg bg-indigo-600 text-white font-semibold text-[10px] active:scale-95"
+                        >
+                          Koy
+                        </button>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => onPostponeIncompleteTasks('delete')}
+                        className="p-2 rounded-xl bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-900/60 border border-rose-200 dark:border-rose-900 text-rose-700 dark:text-rose-300 font-semibold text-center transition active:scale-95 flex items-center justify-center gap-1.5"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                        <span>Görevleri Sil</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
-        );
-      })()}
+        )}
+
+        {/* Card 2.5: İNGİLİZCE KELİME KARTLARI & GÜNLÜK HEDEF KARTI */}
+        {moduleSettings.showEnglish && (() => {
+          const dueEnglishCards = englishCards.filter((c) => isCardDueToday(c, todayStr));
+          const todayLearned = englishCards.filter((c) => c.learnedDate === todayStr).length;
+          const targetGoal = (isTiring && englishSettings?.reduceGoalOnFatigue)
+            ? Math.max(1, Math.round((englishSettings?.dailyNewWordGoal || 5) / 2))
+            : (englishSettings?.dailyNewWordGoal || 5);
+          const goalPct = Math.min(100, Math.round((todayLearned / Math.max(1, targetGoal)) * 100));
+
+          return (
+            <div className="rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 p-4.5 sm:p-5 shadow-sm space-y-3.5">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-10 h-10 rounded-2xl bg-sky-50 dark:bg-sky-950/60 text-sky-600 dark:text-sky-400 flex items-center justify-center">
+                    <Languages className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100">
+                        İngilizce Kelime Hedefi
+                      </h3>
+                      {isTiring && englishSettings?.reduceGoalOnFatigue && (
+                        <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300">
+                          🌱 Yorgunluk Dostu Hedef
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                      Bugün {todayLearned}/{targetGoal} yeni kelime • {dueEnglishCards.length} kart tekrar bekliyor
+                    </p>
+                  </div>
+                </div>
+
+                {onNavigateToEnglish && (
+                  <button
+                    onClick={onNavigateToEnglish}
+                    className="text-xs font-semibold text-sky-600 dark:text-sky-400 hover:underline flex items-center gap-1"
+                  >
+                    <span>Çalış</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+
+              {/* Mini Progress Bar */}
+              <div className="p-3 rounded-2xl bg-slate-50/80 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800 space-y-1.5">
+                <div className="flex items-center justify-between text-xs font-medium text-slate-600 dark:text-slate-300">
+                  <span>Bugün {todayLearned}/{targetGoal} yeni kelime</span>
+                  <span className="font-bold text-sky-600 dark:text-sky-400">%{goalPct}</span>
+                </div>
+                <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2 overflow-hidden">
+                  <div
+                    className="bg-sky-500 h-2 rounded-full transition-all duration-300"
+                    style={{ width: `${goalPct}%` }}
+                  />
+                </div>
+              </div>
+
+              {/* Quick Actions / Status */}
+              <div className="flex items-center justify-between pt-1">
+                <div className="text-xs text-slate-500 dark:text-slate-400">
+                  {dueEnglishCards.length > 0 ? (
+                    <span className="text-amber-600 dark:text-amber-400 font-semibold">
+                      🔔 Bugün tekrar edilecek {dueEnglishCards.length} kelime kartı var.
+                    </span>
+                  ) : (
+                    <span className="text-emerald-600 dark:text-emerald-400 font-medium">
+                      ✓ Bugünün tüm tekrarları güncel.
+                    </span>
+                  )}
+                </div>
+
+                {onNavigateToEnglish && (
+                  <button
+                    onClick={onNavigateToEnglish}
+                    className="px-3.5 py-1.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white text-xs font-semibold shadow-xs active:scale-95 transition"
+                  >
+                    {dueEnglishCards.length > 0 ? 'Tekrarı Başlat' : 'Kelime Ekle'}
+                  </button>
+                )}
+              </div>
+            </div>
+          );
+        })()}
+
+        {/* Card 2.7: ÜNİVERSİTE SINAV GERİ SAYIMI & SONUÇ SORUSU KARTLARI */}
+        {moduleSettings.showStudy && (() => {
+          const courseMap = new Map(universityCourses.map((c) => [c.id, c]));
+
+          // 1. Upcoming exams countdown (closest up to 3)
+          const upcomingExamsAll = universityExams
+            .filter((e) => {
+              const cd = getExamCountdown(e, todayStr);
+              return !cd.isPast;
+            })
+            .sort((a, b) => a.date.localeCompare(b.date));
+
+          // Ortak sınav tarihiyle oluşturulan sınavlar (tüm dersler aynı gün) tek satırda gösterilir
+          const seenCommonKeys = new Set<string>();
+          const upcomingExams = upcomingExamsAll
+            .filter((e) => {
+              if (!e.commonGroup) return true;
+              const key = `${e.commonGroup}-${e.date}`;
+              if (seenCommonKeys.has(key)) return false;
+              seenCommonKeys.add(key);
+              return true;
+            })
+            .slice(0, 3);
+          const commonCourseCount = (e: UniversityExam) =>
+            e.commonGroup
+              ? upcomingExamsAll.filter((x) => x.commonGroup === e.commonGroup && x.date === e.date).length
+              : 0;
+
+          // 2. Exams eligible for result inquiry question ("Sonuç açıklandı mı?")
+          const resultInquiryExams = universityExams.filter((e) => {
+            const cd = getExamCountdown(e, todayStr);
+            return cd.isResultPromptEligible;
+          });
+
+          // 3. Exams with 3 days or fewer asking "Çalışma görevi eklemek ister misin?"
+          const studyPromptExams = upcomingExams.filter((e) => {
+            const cd = getExamCountdown(e, todayStr);
+            return cd.isStudyPromptEligible;
+          });
+
+          if (upcomingExams.length === 0 && resultInquiryExams.length === 0) {
+            return null;
+          }
+
+          return (
+            <div className="space-y-3">
+              {/* Sınav Sonucu Soru Kartları (Sonuç açıklandı mı?) */}
+              {resultInquiryExams.map((exam) => {
+                const course = courseMap.get(exam.courseId);
+                const courseName = course?.name || 'Üniversite Dersi';
+                const examTitle = exam.title || getExamTypeTitle(exam.examType);
+
+                return (
+                  <div
+                    key={`result-prompt-${exam.id}`}
+                    className="rounded-3xl bg-teal-50/90 dark:bg-teal-950/40 border border-teal-200 dark:border-teal-800/80 p-4 sm:p-5 shadow-sm space-y-3 animate-in fade-in duration-200"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-10 h-10 rounded-2xl bg-teal-100 dark:bg-teal-900/60 text-teal-700 dark:text-teal-300 flex items-center justify-center flex-shrink-0">
+                          <HelpCircle className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <div className="text-[11px] font-bold text-teal-700 dark:text-teal-300 uppercase tracking-wide">
+                            Sınav Sonucu Takibi
+                          </div>
+                          <h4 className="text-sm font-bold text-slate-800 dark:text-slate-100">
+                            "{courseName}" {examTitle} sonucu açıklandı mı?
+                          </h4>
+                          <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                            Sınav Tarihi: {exam.date}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 pt-1">
+                      <button
+                        type="button"
+                        onClick={() => setActiveResultModalExam(exam)}
+                        className="flex-1 py-2 px-3 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-semibold text-xs shadow-xs active:scale-95 transition text-center"
+                      >
+                        Açıklandı (Sonucu Gir) ✓
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (onPostponeExamResultPrompt) {
+                            onPostponeExamResultPrompt(exam.id);
+                          }
+                        }}
+                        className="py-2 px-3 rounded-xl border border-teal-300 dark:border-teal-700 bg-white dark:bg-slate-800 text-teal-800 dark:text-teal-200 font-semibold text-xs hover:bg-teal-50 dark:hover:bg-teal-950/60 transition active:scale-95"
+                      >
+                        Daha değil (Yarın tekrar sor)
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+
+              {/* Yaklaşan Sınavlar Geri Sayım Kartı */}
+              {upcomingExams.length > 0 && (() => {
+                const primaryExam = upcomingExams[0];
+                const primaryCourse = courseMap.get(primaryExam.courseId);
+                const primaryIsCommon = !!primaryExam.commonGroup;
+                const primaryCourseName = primaryIsCommon
+                  ? `Tüm dersler (${commonCourseCount(primaryExam)} ders)`
+                  : primaryCourse?.name || 'Üniversite Dersi';
+                const primaryCountdown = getExamCountdown(primaryExam, todayStr);
+                const isUrgent = primaryCountdown.isImminent; // 7 days or fewer
+
+                return (
+                  <div
+                    className={`rounded-3xl border p-4.5 sm:p-5 shadow-sm space-y-3.5 transition ${
+                      isUrgent
+                        ? 'bg-amber-50/70 dark:bg-amber-950/20 border-amber-200 dark:border-amber-900/60'
+                        : 'bg-white dark:bg-slate-900 border-indigo-100 dark:border-slate-800'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2.5">
+                        <div
+                          className={`w-9 h-9 rounded-2xl flex items-center justify-center ${
+                            isUrgent
+                              ? 'bg-amber-100 text-amber-800 dark:bg-amber-950/80 dark:text-amber-300'
+                              : 'bg-indigo-50 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300'
+                          }`}
+                        >
+                          <GraduationCap className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100">
+                              {primaryIsCommon ? 'Üniversite Sınavlarına Kalan Süre' : 'En Yakın Üniversite Sınavı'}
+                            </h3>
+                            {isUrgent && (
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-200/80 dark:bg-amber-900/80 text-amber-900 dark:text-amber-200">
+                                Yaklaşıyor
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-xs text-slate-500 dark:text-slate-400">
+                            {primaryCourseName} • {primaryExam.title || getExamTypeTitle(primaryExam.examType)}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* .ics export button */}
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => generateExamIcsFile(primaryExam, primaryCourseName)}
+                          className="p-2 rounded-xl text-slate-500 hover:text-indigo-600 hover:bg-white/80 dark:hover:bg-slate-800 transition"
+                          title="Takvime Ekle (.ics)"
+                        >
+                          <Download className="w-4 h-4" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (onNavigateToStudy) {
+                              onNavigateToStudy('sinavlar');
+                            } else if (onNavigateToUniversity) {
+                              onNavigateToUniversity();
+                            }
+                          }}
+                          className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-0.5"
+                        >
+                          <span>Tümü</span>
+                          <ArrowRight className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Primary Countdown Banner */}
+                    <div className="p-3.5 rounded-2xl bg-white/80 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700 flex items-center justify-between gap-3">
+                      <div>
+                        <div className="font-bold text-slate-800 dark:text-slate-100 text-xs">
+                          {!primaryIsCommon && primaryCourse?.code ? `${primaryCourse.code} - ` : ''}{primaryCourseName}
+                        </div>
+                        <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 flex items-center gap-2">
+                          <span className="font-mono">{primaryExam.date}</span>
+                          {primaryExam.time && <span>• Saat: {primaryExam.time}</span>}
+                        </div>
+                      </div>
+
+                      <div
+                        className={`rounded-xl font-bold flex-shrink-0 ${
+                          primaryIsCommon ? 'px-4 py-2 text-sm' : 'px-3 py-1.5 text-xs'
+                        } ${
+                          isUrgent
+                            ? 'bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-200'
+                            : 'bg-indigo-50 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300'
+                        }`}
+                      >
+                        {primaryCountdown.label}
+                      </div>
+                    </div>
+
+                    {/* 3 gün kala çalışma görevi ekleme sorusu */}
+                    {primaryCountdown.isStudyPromptEligible && (
+                      <div className="p-3 rounded-2xl bg-indigo-50/70 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800/80 text-xs space-y-2">
+                        <div className="flex items-center gap-2 font-semibold text-indigo-950 dark:text-indigo-200">
+                          <Sparkles className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                          <span>Bu sınav için çalışma görevi eklemek ister misin?</span>
+                        </div>
+                        <p className="text-[11px] text-slate-600 dark:text-slate-400">
+                          {primaryCountdown.label}. İstersen Çalışma sekmesindeki programa otomatik ekleme yapmadan, senin onayına göre görev ekleyelim.
+                        </p>
+                        <div className="flex items-center gap-2 pt-1">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (onAddExamStudyTasks) {
+                                onAddExamStudyTasks(primaryExam, primaryCourseName);
+                              } else {
+                                onOpenAddStudyTask(`${primaryCourseName} Sınav Tekrarı`);
+                              }
+                            }}
+                            className="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-[11px] transition active:scale-95"
+                          >
+                            Evet, Görev Ekle
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Up to 3 exams list if multiple */}
+                    {upcomingExams.length > 1 && (
+                      <div className="space-y-1.5 pt-1 border-t border-slate-100 dark:border-slate-800">
+                        <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                          Diğer Yaklaşan Sınavlar
+                        </div>
+                        {upcomingExams.slice(1).map((exam) => {
+                          const course = courseMap.get(exam.courseId);
+                          const cName = exam.commonGroup
+                            ? `Tüm dersler (${commonCourseCount(exam)} ders)`
+                            : course?.name || 'Üniversite Dersi';
+                          const cd = getExamCountdown(exam, todayStr);
+
+                          return (
+                            <div
+                              key={exam.id}
+                              className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-850 flex items-center justify-between text-xs"
+                            >
+                              <span className="font-semibold text-slate-700 dark:text-slate-300 truncate max-w-[200px]">
+                                {cName}
+                              </span>
+                              <div className="flex items-center gap-2 text-[11px] text-slate-500">
+                                <span className="font-mono">{exam.date}</span>
+                                <span className="font-bold text-indigo-600 dark:text-indigo-400">{cd.label}</span>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
+            </div>
+          );
+        })()}
+
+        {/* FİKİRLER KARTI (Yapılıyor projeler ve son güncellenen fikirler birleşik) */}
+        {moduleSettings.showNotes && (() => {
+          const getStatusMeta = (status: string) => {
+            switch (status) {
+              case 'yapiliyor':
+                return { label: 'Yapılıyor', bg: 'bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 border-amber-300 dark:border-amber-800' };
+              case 'fikir':
+                return { label: 'Fikir', bg: 'bg-blue-100 dark:bg-blue-950 text-blue-800 dark:text-blue-300 border-blue-300 dark:border-blue-800' };
+              case 'arastirma':
+                return { label: 'Araştırma', bg: 'bg-purple-100 dark:bg-purple-950 text-purple-800 dark:text-purple-300 border-purple-300 dark:border-purple-800' };
+              case 'yayinda':
+                return { label: 'Yayında', bg: 'bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800' };
+              default:
+                return { label: 'Fikir', bg: 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-700' };
+            }
+          };
+
+          const inProgressIdeas = projectIdeas.filter((i) => i.status === 'yapiliyor');
+          const otherIdeas = projectIdeas
+            .filter((i) => i.status !== 'yapiliyor' && i.status !== 'rafa_kaldirildi')
+            .sort((a, b) => {
+              if (a.isStarred !== b.isStarred) return a.isStarred ? -1 : 1;
+              return b.updatedAt - a.updatedAt;
+            });
+
+          const displayedInProgress = inProgressIdeas.slice(0, 3);
+          const remainingSlots = Math.max(0, 3 - displayedInProgress.length);
+          const displayedOther = otherIdeas.slice(0, remainingSlots);
+          const hasAnyIdeas = projectIdeas.length > 0;
+
+          return (
+            <div className="rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 p-5 shadow-sm space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center">
+                    <Lightbulb className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+                      Fikirler
+                    </h3>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                      Geliştirme projeleri ve fikir havuzu
+                    </p>
+                  </div>
+                </div>
+                {hasAnyIdeas && onNavigateToIdeas && (
+                  <button
+                    type="button"
+                    onClick={() => onNavigateToIdeas()}
+                    className="text-xs text-amber-600 dark:text-amber-400 hover:underline font-medium flex items-center gap-1"
+                  >
+                    <span>Tümü</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+
+              {!hasAnyIdeas ? (
+                <div className="rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 p-6 text-center text-slate-400 dark:text-slate-500">
+                  <p className="text-xs">Henüz eklenmiş fikir veya proje yok.</p>
+                  {onNavigateToIdeas && (
+                    <button
+                      type="button"
+                      onClick={() => onNavigateToIdeas()}
+                      className="mt-2 text-xs text-amber-600 dark:text-amber-400 font-medium hover:underline"
+                    >
+                      İlk fikrini ekle →
+                    </button>
+                  )}
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {/* 1. Önce Yapılıyor Durumundaki Projeler */}
+                  {displayedInProgress.map((idea) => {
+                    const totalTodos = idea.todos?.length || 0;
+                    const completedTodos = idea.todos?.filter((t) => t.completed).length || 0;
+                    const percent = totalTodos > 0 ? Math.round((completedTodos / totalTodos) * 100) : null;
+                    const meta = getStatusMeta(idea.status);
+
+                    return (
+                      <button
+                        key={idea.id}
+                        type="button"
+                        onClick={() => onNavigateToIdeas && onNavigateToIdeas(idea.id)}
+                        className="w-full text-left p-3 rounded-2xl bg-amber-50/60 hover:bg-amber-100/50 dark:bg-amber-950/20 dark:hover:bg-amber-950/40 border border-amber-200/70 dark:border-amber-900/40 transition group space-y-1.5"
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-1.5 min-w-0">
+                            <span className="text-xs font-bold text-slate-900 dark:text-white truncate group-hover:text-amber-600 transition">
+                              {idea.title}
+                            </span>
+                            {idea.isStarred && <Star className="w-3 h-3 fill-amber-500 text-amber-500 flex-shrink-0" />}
+                          </div>
+
+                          <div className="flex items-center gap-1.5 flex-shrink-0">
+                            {percent !== null && (
+                              <span className="text-[10px] font-bold text-amber-800 dark:text-amber-300 px-1.5 py-0.5 rounded-md bg-amber-100/80 dark:bg-amber-900/60">
+                                %{percent}
+                              </span>
+                            )}
+                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${meta.bg}`}>
+                              {meta.label}
+                            </span>
+                          </div>
+                        </div>
+
+                        {idea.nextStep ? (
+                          <p className="text-xs text-slate-700 dark:text-slate-300 font-medium flex items-center gap-1.5 line-clamp-1">
+                            <span className="text-amber-600 dark:text-amber-400 font-bold text-[11px] flex-shrink-0">
+                              Sonraki Adım:
+                            </span>
+                            <span className="truncate">{idea.nextStep}</span>
+                          </p>
+                        ) : (
+                          <p className="text-[11px] text-slate-400 italic">
+                            Sonraki adım eklenmedi
+                          </p>
+                        )}
+                      </button>
+                    );
+                  })}
+
+                  {/* 2. Altında Diğer Fikirler (Yıldızlılar önce, son güncellenenler) */}
+                  {displayedOther.map((idea) => {
+                    const meta = getStatusMeta(idea.status);
+
+                    return (
+                      <button
+                        key={idea.id}
+                        type="button"
+                        onClick={() => onNavigateToIdeas && onNavigateToIdeas(idea.id)}
+                        className="w-full text-left p-3 rounded-2xl bg-slate-50 hover:bg-slate-100 dark:bg-slate-800/40 dark:hover:bg-slate-800 transition border border-slate-100 dark:border-slate-800 group"
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-1.5 min-w-0">
+                            <span className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate group-hover:text-amber-600 dark:group-hover:text-amber-400 transition">
+                              {idea.title}
+                            </span>
+                            {idea.isStarred && <Star className="w-3 h-3 fill-amber-500 text-amber-500 flex-shrink-0" />}
+                          </div>
+
+                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border flex-shrink-0 ${meta.bg}`}>
+                            {meta.label}
+                          </span>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          );
+        })()}
       </div>
 
       {/* YORGUNLUK MODU ÖNERİLER MODALİ (Nazik ve suçlayıcı olmayan öneriler) */}
