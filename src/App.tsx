@@ -162,13 +162,6 @@ import { onAuthStateChanged, User } from 'firebase/auth';
 import { logoutUser, ensureUserProfile } from './services/authService';
 import { clearAllDatabase as clearLocalDatabase } from './db/indexedDb';
 import { AuthScreen } from './components/auth/AuthScreen';
-import { DataMigrationModal } from './components/auth/DataMigrationModal';
-import {
-  LocalDataSummary,
-  getLocalDataSummary,
-  isUserMigrated,
-  markUserAsMigrated
-} from './services/migrationService';
 import {
   subscribeToUserData,
   saveStudentCloud,
@@ -341,8 +334,6 @@ export default function App() {
   // Firebase Auth & Migration State
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [authLoading, setAuthLoading] = useState<boolean>(true);
-  const [migrationSummary, setMigrationSummary] = useState<LocalDataSummary | null>(null);
-  const [isMigrationModalOpen, setIsMigrationModalOpen] = useState(false);
   const [cloudSynced, setCloudSynced] = useState(false);
 
   // Güvenlik: Eğer kullanıcı bir sekmeyi kapattıysa ve o sekmedeyse onu Ana Sayfa'ya at
@@ -539,17 +530,6 @@ export default function App() {
 
       if (user) {
         ensureUserProfile(user).catch((e) => console.warn('Profil oluşturulamadı:', e));
-        try {
-          if (!isUserMigrated(user.uid)) {
-            const summary = await getLocalDataSummary();
-            if (summary.totalCount > 0) {
-              setMigrationSummary(summary);
-              setIsMigrationModalOpen(true);
-            }
-          }
-        } catch (e) {
-          console.warn('Migration check notice:', e);
-        }
       } else {
         setCloudSynced(false);
         setIsLoading(false);
@@ -2281,22 +2261,6 @@ export default function App() {
         settings={studySettings}
         onSaveTaskDuration={handleSavePomodoroDuration}
       />
-
-      {/* Yerel veriyi hesaba aktarma */}
-      {currentUser && migrationSummary && (
-        <DataMigrationModal
-          uid={currentUser.uid}
-          summary={migrationSummary}
-          isOpen={isMigrationModalOpen}
-          onClose={() => {
-            setIsMigrationModalOpen(false);
-          }}
-          onMigrated={() => {
-            markUserAsMigrated(currentUser.uid);
-            setMigrationSummary(null);
-          }}
-        />
-      )}
 
       {/* PWA Phone Installation Guide Modal */}
       <PWAInstallModal
