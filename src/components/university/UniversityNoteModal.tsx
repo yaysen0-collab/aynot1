@@ -1,20 +1,17 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  X, 
-  Bold, 
-  Italic, 
-  Heading, 
-  List, 
-  Image as ImageIcon, 
-  Mic, 
-  Tag, 
-  Trash2, 
-  Check, 
-  AlertCircle 
-} from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Bold, Italic, Heading, List, Image as ImageIcon, Trash2 } from 'lucide-react';
 import { UniversityNote, UniversityNoteTag, UniversityCourse } from '../../types';
 import { compressImageFile } from '../../utils/universityUtils';
 import { VoiceInputButton } from '../common/VoiceInputButton';
+import {
+  NoteEditorShell,
+  AutoGrowTextarea,
+  NoteMetaCard,
+  NoteMetaRow,
+  NoteChipRow,
+  noteChipClass,
+  noteInputClass,
+} from '../common/NoteEditorShell';
 
 interface UniversityNoteModalProps {
   isOpen: boolean;
@@ -29,11 +26,11 @@ interface UniversityNoteModalProps {
   voiceNotesEnabled?: boolean;
 }
 
-const TAG_OPTIONS: Array<{ id: UniversityNoteTag; label: string; color: string }> = [
-  { id: 'konu', label: 'Konu Notu', color: 'indigo' },
-  { id: 'ozet', label: 'Özet', color: 'teal' },
-  { id: 'soru', label: 'Soru & Cevap', color: 'amber' },
-  { id: 'onemli', label: 'Önemli / Sınavda Çıkar', color: 'rose' },
+const TAG_OPTIONS: Array<{ id: UniversityNoteTag; label: string }> = [
+  { id: 'konu', label: 'Konu Notu' },
+  { id: 'ozet', label: 'Özet' },
+  { id: 'soru', label: 'Soru & Cevap' },
+  { id: 'onemli', label: 'Önemli / Sınavda Çıkar' },
 ];
 
 export const UniversityNoteModal: React.FC<UniversityNoteModalProps> = ({
@@ -53,16 +50,35 @@ export const UniversityNoteModal: React.FC<UniversityNoteModalProps> = ({
   const [imageUrl, setImageUrl] = useState<string | undefined>(noteToEdit?.imageUrl);
   const [isCompressing, setIsCompressing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [selectedCourseId, setSelectedCourseId] = useState(noteToEdit?.courseId || courseId);
+  const [openedAt, setOpenedAt] = useState(Date.now());
+
+  const bodyRef = useRef<HTMLTextAreaElement>(null);
+  const initialSnapRef = useRef<string>('');
+
+  const snapshot = (v: { t: string; c: string; g: string; i?: string; k: string }) => JSON.stringify(v);
 
   // Modal sürekli bağlı kalabiliyor (ders detay sayfası); her açılışta / farklı not seçildiğinde formu sıfırla
   useEffect(() => {
     if (!isOpen) return;
-    setTitle(noteToEdit?.title || '');
-    setContent(noteToEdit?.content || '');
-    setTag(noteToEdit?.tag || 'konu');
-    setImageUrl(noteToEdit?.imageUrl);
-    setSelectedCourseId(noteToEdit?.courseId || courseId);
+    const init = {
+      t: noteToEdit?.title || '',
+      c: noteToEdit?.content || '',
+      g: noteToEdit?.tag || 'konu',
+      i: noteToEdit?.imageUrl,
+      k: noteToEdit?.courseId || courseId,
+    };
+    setTitle(init.t);
+    setContent(init.c);
+    setTag(init.g as UniversityNoteTag);
+    setImageUrl(init.i);
+    setSelectedCourseId(init.k);
+    setError(null);
+    setOpenedAt(noteToEdit?.updatedAt || noteToEdit?.createdAt || Date.now());
+    initialSnapRef.current = snapshot(init);
+    if (!noteToEdit) setTimeout(() => bodyRef.current?.focus(), 150);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, noteToEdit?.id, courseId]);
 
   if (!isOpen) return null;
@@ -74,7 +90,7 @@ export const UniversityNoteModal: React.FC<UniversityNoteModalProps> = ({
   const effectiveCourseName = selectedCourse ? selectedCourse.name : courseName;
 
   const handleFormatText = (prefix: string, suffix: string = '') => {
-    const textarea = document.getElementById('univ-note-content-area') as HTMLTextAreaElement;
+    const textarea = bodyRef.current;
     if (!textarea) return;
 
     const start = textarea.selectionStart;
@@ -101,17 +117,24 @@ export const UniversityNoteModal: React.FC<UniversityNoteModalProps> = ({
       const compressedDataUrl = await compressImageFile(file, 1200, 0.75);
       setImageUrl(compressedDataUrl);
     } catch {
-      // ignore
+      setError('Fotoğraf eklenemedi, lütfen tekrar deneyin.');
     } finally {
       setIsCompressing(false);
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!title.trim() || !content.trim()) return;
+  const handleSubmit = async () => {
+    if (!title.trim()) {
+      setError('Lütfen not başlığını yazınız.');
+      return;
+    }
+    if (!content.trim()) {
+      setError('Lütfen not içeriğini yazınız.');
+      return;
+    }
 
     setIsSaving(true);
+    setError(null);
     try {
       await onSaveNote({
         id: noteToEdit?.id,
@@ -124,214 +147,121 @@ export const UniversityNoteModal: React.FC<UniversityNoteModalProps> = ({
         imageUrl,
       });
       onClose();
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Not kaydedilirken bir hata oluştu.');
     } finally {
       setIsSaving(false);
     }
   };
 
+  const isDirty =
+    snapshot({ t: title, c: content, g: tag, i: imageUrl, k: selectedCourseId }) !== initialSnapRef.current;
+
+  const dateText = new Date(openedAt).toLocaleString('tr-TR', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+
+  const formatBtn =
+    'p-2 rounded-xl text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 active:scale-90 transition';
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
-      <div 
-        className="w-full max-w-xl bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200/90 dark:border-slate-800 overflow-hidden flex flex-col max-h-[92vh] animate-in zoom-in-95 duration-200"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Header */}
-        <div className="p-4 sm:p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/70 dark:bg-slate-800/40">
-          <div>
-            <span className="text-[11px] font-semibold text-indigo-600 dark:text-indigo-400">
-              {effectiveCourseName}
-            </span>
-            <h3 className="text-base font-bold text-slate-800 dark:text-slate-100">
-              {noteToEdit ? 'Ders Notunu Düzenle' : 'Yeni Ders Notu Ekle'}
-            </h3>
-          </div>
+    <NoteEditorShell
+      backLabel="Ders Notları"
+      dateText={dateText}
+      title={title}
+      onTitleChange={setTitle}
+      titlePlaceholder="Başlık"
+      onTitleEnter={() => bodyRef.current?.focus()}
+      isSaving={isSaving}
+      isDirty={isDirty}
+      canSave={!!title.trim() && !!content.trim() && !isCompressing}
+      onSave={handleSubmit}
+      onClose={onClose}
+      error={error}
+      onEmptyAreaClick={() => bodyRef.current?.focus()}
+      headerActions={
+        voiceNotesEnabled ? (
+          <VoiceInputButton
+            onInsertText={(transcript) => setContent((prev) => (prev ? `${prev} ${transcript}` : transcript))}
+            compact
+          />
+        ) : undefined
+      }
+    >
+      <NoteMetaCard>
+        <NoteMetaRow label="Ders">
+          {selectableCourses ? (
+            <select
+              value={effectiveCourseId}
+              onChange={(e) => setSelectedCourseId(e.target.value)}
+              className={`${noteInputClass} font-semibold cursor-pointer`}
+            >
+              {selectableCourses.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.code ? `${c.code} - ${c.name}` : c.name}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <span className="text-[15px] font-semibold text-slate-800 dark:text-slate-100">{effectiveCourseName}</span>
+          )}
+        </NoteMetaRow>
+        <NoteMetaRow label="Etiket">
+          <NoteChipRow>
+            {TAG_OPTIONS.map((t) => (
+              <button key={t.id} type="button" onClick={() => setTag(t.id)} className={noteChipClass(tag === t.id)}>
+                #{t.label}
+              </button>
+            ))}
+          </NoteChipRow>
+        </NoteMetaRow>
+      </NoteMetaCard>
+
+      {/* Biçimlendirme */}
+      <div className="flex items-center gap-0.5 -ml-2 mb-1">
+        <button type="button" onClick={() => handleFormatText('**', '**')} className={formatBtn} title="Kalın">
+          <Bold className="w-[18px] h-[18px]" />
+        </button>
+        <button type="button" onClick={() => handleFormatText('*', '*')} className={formatBtn} title="İtalik">
+          <Italic className="w-[18px] h-[18px]" />
+        </button>
+        <button type="button" onClick={() => handleFormatText('\n### ', '\n')} className={formatBtn} title="Başlık">
+          <Heading className="w-[18px] h-[18px]" />
+        </button>
+        <button type="button" onClick={() => handleFormatText('\n- ')} className={formatBtn} title="Madde İşareti">
+          <List className="w-[18px] h-[18px]" />
+        </button>
+        <label className={`${formatBtn} cursor-pointer flex items-center`} title="Fotoğraf Ekle">
+          <ImageIcon className="w-[18px] h-[18px]" />
+          <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
+        </label>
+        {isCompressing && <span className="ml-2 text-[11px] text-teal-600 animate-pulse">Görsel optimize ediliyor...</span>}
+      </div>
+
+      <AutoGrowTextarea
+        ref={bodyRef}
+        value={content}
+        onChange={(e) => setContent(e.target.value)}
+        placeholder="Not yazın... Kalın, italik, başlık ve madde işaretleri desteklenir."
+      />
+
+      {imageUrl && (
+        <div className="relative mt-2 mb-4 rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900">
+          <img src={imageUrl} alt="Eklenen fotoğraf" className="w-full max-h-72 object-contain" />
           <button
-            onClick={onClose}
-            className="w-8 h-8 rounded-full hover:bg-slate-200/70 dark:hover:bg-slate-700 flex items-center justify-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition"
+            type="button"
+            onClick={() => setImageUrl(undefined)}
+            className="absolute top-2 right-2 p-2 rounded-full bg-rose-600 text-white shadow-md hover:bg-rose-700 transition"
+            title="Fotoğrafı Kaldır"
           >
-            <X className="w-4 h-4" />
+            <Trash2 className="w-4 h-4" />
           </button>
         </div>
-
-        {/* Form Body */}
-        <form onSubmit={handleSubmit} className="p-4 sm:p-5 space-y-3.5 overflow-y-auto flex-1 text-xs">
-          {/* Ders seçici */}
-          {selectableCourses && (
-            <div>
-              <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                Ders <span className="text-rose-500">*</span>
-              </label>
-              <select
-                value={effectiveCourseId}
-                onChange={(e) => setSelectedCourseId(e.target.value)}
-                className="w-full p-2.5 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 font-semibold focus:ring-2 focus:ring-indigo-500"
-              >
-                {selectableCourses.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.code ? `${c.code} - ${c.name}` : c.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
-
-          {/* Title */}
-          <div>
-            <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
-              Not Başlığı <span className="text-rose-500">*</span>
-            </label>
-            <input
-              type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="örn. 3. Ünite: SQL Join Türleri ve İndeksler"
-              required
-              className="w-full p-2.5 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 font-semibold focus:ring-2 focus:ring-indigo-500"
-            />
-          </div>
-
-          {/* Tags */}
-          <div>
-            <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-              Etiket
-            </label>
-            <div className="flex flex-wrap gap-1.5">
-              {TAG_OPTIONS.map((t) => (
-                <button
-                  key={t.id}
-                  type="button"
-                  onClick={() => setTag(t.id)}
-                  className={`px-3 py-1.5 rounded-xl font-medium transition active:scale-95 text-[11px] ${
-                    tag === t.id
-                      ? 'bg-indigo-600 text-white shadow-sm'
-                      : 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300'
-                  }`}
-                >
-                  #{t.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Formatting Toolbar */}
-          <div className="flex items-center flex-wrap gap-1 p-1.5 rounded-2xl bg-slate-100/80 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700">
-            <button
-              type="button"
-              onClick={() => handleFormatText('**', '**')}
-              className="p-1.5 rounded-lg hover:bg-white dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition"
-              title="Kalın"
-            >
-              <Bold className="w-4 h-4" />
-            </button>
-            <button
-              type="button"
-              onClick={() => handleFormatText('*', '*')}
-              className="p-1.5 rounded-lg hover:bg-white dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition"
-              title="İtalik"
-            >
-              <Italic className="w-4 h-4" />
-            </button>
-            <button
-              type="button"
-              onClick={() => handleFormatText('\n### ', '\n')}
-              className="p-1.5 rounded-lg hover:bg-white dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition"
-              title="Başlık"
-            >
-              <Heading className="w-4 h-4" />
-            </button>
-            <button
-              type="button"
-              onClick={() => handleFormatText('\n- ')}
-              className="p-1.5 rounded-lg hover:bg-white dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition"
-              title="Madde İşareti"
-            >
-              <List className="w-4 h-4" />
-            </button>
-
-            <span className="w-px h-4 bg-slate-300 dark:bg-slate-600 mx-1" />
-
-            {/* Image upload */}
-            <label className="p-1.5 rounded-lg hover:bg-white dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 cursor-pointer transition flex items-center gap-1">
-              <ImageIcon className="w-4 h-4" />
-              <span className="text-[10px] font-medium hidden sm:inline">Fotoğraf Ekle</span>
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleImageUpload}
-                className="hidden"
-              />
-            </label>
-
-            {/* Voice typing */}
-            {voiceNotesEnabled && (
-              <div className="ml-auto">
-                <VoiceInputButton
-                  onInsertText={(transcript) => {
-                    setContent((prev) => (prev ? `${prev} ${transcript}` : transcript));
-                  }}
-                  compact
-                />
-              </div>
-            )}
-          </div>
-
-          {/* Content Area */}
-          <div>
-            <textarea
-              id="univ-note-content-area"
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              rows={8}
-              placeholder="Notlarınızı buraya yazın... Kalın, italik, başlık ve madde işaretleri desteklenir."
-              required
-              className="w-full p-3 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 leading-relaxed font-sans focus:ring-2 focus:ring-indigo-500"
-            />
-          </div>
-
-          {/* Uploaded Image Preview */}
-          {imageUrl && (
-            <div className="relative p-2 rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/40 inline-block">
-              <img
-                src={imageUrl}
-                alt="Eklenen fotoğraf"
-                className="max-h-36 rounded-xl object-contain"
-              />
-              <button
-                type="button"
-                onClick={() => setImageUrl(undefined)}
-                className="absolute top-3 right-3 p-1.5 rounded-full bg-rose-600 text-white shadow-md hover:bg-rose-700 transition"
-                title="Fotoğrafı Kaldır"
-              >
-                <Trash2 className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          )}
-
-          {isCompressing && (
-            <div className="text-[11px] text-indigo-600 animate-pulse">
-              Görsel boyutu otomatik optimize ediliyor...
-            </div>
-          )}
-
-          <div className="p-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/40 -mx-4 -mb-4 sm:-mx-5 sm:-mb-5 mt-4 flex items-center justify-between">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition"
-            >
-              Vazgeç
-            </button>
-            <button
-              type="submit"
-              disabled={isSaving || !title.trim() || !content.trim()}
-              className="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-semibold text-xs shadow-sm transition active:scale-95 flex items-center gap-1.5"
-            >
-              <span>{noteToEdit ? 'Güncelle' : 'Kaydet'}</span>
-              <Check className="w-4 h-4" />
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+      )}
+    </NoteEditorShell>
   );
 };
