@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { 
   Sun, 
   Moon, 
@@ -28,7 +28,8 @@ import {
   CheckCircle2,
   HelpCircle,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  LayoutGrid
 } from 'lucide-react';
 import { ThemeMode } from '../../hooks/useTheme';
 import { exportDatabase, importDatabase, seedSampleData } from '../../db/indexedDb';
@@ -37,6 +38,13 @@ import { clearAllDatabase as clearAllRepositoryData } from '../../db/repository'
 import { clearAllDatabase as clearLocalDatabase } from '../../db/indexedDb';
 import { BackupData, ParentCallSettings, StudySettings, EnglishDailyGoalSettings } from '../../types';
 import { DAY_NAMES_TR, downloadIcsFile, getGoogleCalendarUrl, requestNotificationPermission, toLocalISODate } from '../../utils/calendar';
+
+export interface ModuleSettings {
+  showSchool: boolean;
+  showStudy: boolean;
+  showEnglish: boolean;
+  showNotes: boolean;
+}
 
 interface SettingsViewProps {
   theme: ThemeMode;
@@ -47,6 +55,8 @@ interface SettingsViewProps {
   onSaveStudySettings?: (settings: StudySettings) => Promise<void>;
   englishSettings?: EnglishDailyGoalSettings;
   onSaveEnglishSettings?: (settings: EnglishDailyGoalSettings) => Promise<void>;
+  moduleSettings?: ModuleSettings;
+  onSaveModuleSettings?: (settings: ModuleSettings) => Promise<void>;
   stats: {
     studentsCount: number;
     notesCount: number;
@@ -88,6 +98,13 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
     reduceGoalOnFatigue: true,
   },
   onSaveEnglishSettings,
+  moduleSettings = {
+    showSchool: true,
+    showStudy: true,
+    showEnglish: true,
+    showNotes: true,
+  },
+  onSaveModuleSettings,
   stats,
   onRefreshData,
   onOpenInstallGuide,
@@ -130,6 +147,43 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   const [englishGoal, setEnglishGoal] = useState(englishSettings.dailyNewWordGoal || 5);
   const [englishReviewLimit, setEnglishReviewLimit] = useState(englishSettings.dailyReviewLimit || 20);
   const [reduceGoalOnFatigue, setReduceGoalOnFatigue] = useState(englishSettings.reduceGoalOnFatigue ?? true);
+
+  // Module Settings state
+  const [modSchool, setModSchool] = useState(moduleSettings.showSchool);
+  const [modStudy, setModStudy] = useState(moduleSettings.showStudy);
+  const [modEnglish, setModEnglish] = useState(moduleSettings.showEnglish);
+  const [modNotes, setModNotes] = useState(moduleSettings.showNotes);
+
+  useEffect(() => {
+    setModSchool(moduleSettings.showSchool);
+    setModStudy(moduleSettings.showStudy);
+    setModEnglish(moduleSettings.showEnglish);
+    setModNotes(moduleSettings.showNotes);
+  }, [moduleSettings]);
+
+  const handleToggleModule = async (key: keyof ModuleSettings, value: boolean) => {
+    const newSettings = {
+      showSchool: modSchool,
+      showStudy: modStudy,
+      showEnglish: modEnglish,
+      showNotes: modNotes,
+      [key]: value
+    };
+    
+    if (key === 'showSchool') setModSchool(value);
+    if (key === 'showStudy') setModStudy(value);
+    if (key === 'showEnglish') setModEnglish(value);
+    if (key === 'showNotes') setModNotes(value);
+
+    if (onSaveModuleSettings) {
+      try {
+        await onSaveModuleSettings(newSettings);
+        setStatusMessage({ text: 'Sekme ayarları başarıyla güncellendi.', type: 'success' });
+      } catch (err: unknown) {
+        setStatusMessage({ text: 'Ayar kaydedilemedi.', type: 'error' });
+      }
+    }
+  };
 
   const handleSaveUserName = async () => {
     if (!onSaveUserName) return;
@@ -948,7 +1002,74 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         </div>
       </div>
 
-      {/* 5. TEMA SEÇİMİ */}
+      {/* 5. UYGULAMA MODÜLLERİ (SEKMELER) */}
+      <div className="rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 p-4 sm:p-5 shadow-sm space-y-4">
+        <div className="flex items-center gap-2.5">
+          <div className="w-9 h-9 rounded-xl bg-fuchsia-50 dark:bg-fuchsia-950/60 text-fuchsia-600 dark:text-fuchsia-400 flex items-center justify-center">
+            <LayoutGrid className="w-4 h-4" />
+          </div>
+          <div>
+            <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100">
+              Kullanılacak Sekmeler
+            </h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              İhtiyacınız olmayan menüleri gizleyerek arayüzü sadeleştirin
+            </p>
+          </div>
+        </div>
+
+        <div className="space-y-2 pt-1">
+          {/* Okul Modülü */}
+          <div className="p-3.5 rounded-2xl bg-slate-50/80 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800 flex items-center justify-between gap-3">
+            <div>
+              <div className="text-xs font-bold text-slate-800 dark:text-slate-200">Okul & Veliler</div>
+              <div className="text-[11px] text-slate-500 dark:text-slate-400">Öğrenciler, notlar ve veli aramaları</div>
+            </div>
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input type="checkbox" checked={modSchool} onChange={(e) => handleToggleModule('showSchool', e.target.checked)} className="sr-only peer" />
+              <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
+            </label>
+          </div>
+
+          {/* Çalışma Modülü */}
+          <div className="p-3.5 rounded-2xl bg-slate-50/80 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800 flex items-center justify-between gap-3">
+            <div>
+              <div className="text-xs font-bold text-slate-800 dark:text-slate-200">Çalışma Planı & Sınavlar</div>
+              <div className="text-[11px] text-slate-500 dark:text-slate-400">Görevler, pomodoro ve üniversite</div>
+            </div>
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input type="checkbox" checked={modStudy} onChange={(e) => handleToggleModule('showStudy', e.target.checked)} className="sr-only peer" />
+              <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-500"></div>
+            </label>
+          </div>
+
+          {/* İngilizce Modülü */}
+          <div className="p-3.5 rounded-2xl bg-slate-50/80 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800 flex items-center justify-between gap-3">
+            <div>
+              <div className="text-xs font-bold text-slate-800 dark:text-slate-200">İngilizce</div>
+              <div className="text-[11px] text-slate-500 dark:text-slate-400">Kelime kartları ve aralıklı tekrar</div>
+            </div>
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input type="checkbox" checked={modEnglish} onChange={(e) => handleToggleModule('showEnglish', e.target.checked)} className="sr-only peer" />
+              <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-sky-500"></div>
+            </label>
+          </div>
+
+          {/* Notlar Modülü */}
+          <div className="p-3.5 rounded-2xl bg-slate-50/80 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800 flex items-center justify-between gap-3">
+            <div>
+              <div className="text-xs font-bold text-slate-800 dark:text-slate-200">Notlar & Fikirler</div>
+              <div className="text-[11px] text-slate-500 dark:text-slate-400">Kişisel notlar ve proje fikirleri</div>
+            </div>
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input type="checkbox" checked={modNotes} onChange={(e) => handleToggleModule('showNotes', e.target.checked)} className="sr-only peer" />
+              <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-500"></div>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      {/* 6. TEMA SEÇİMİ */}
       <div className="rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 p-4 sm:p-5 shadow-sm space-y-3">
         <div className="flex items-center justify-between">
           <div>
@@ -1000,7 +1121,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         </div>
       </div>
 
-      {/* 4. VERİ YEDEKLEME & DIŞA/İÇE AKTARMA */}
+      {/* 7. VERİ YEDEKLEME & DIŞA/İÇE AKTARMA */}
       <div className="rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 p-4 sm:p-5 shadow-sm space-y-3">
         <div className="flex items-center gap-2.5">
           <div className="w-9 h-9 rounded-xl bg-teal-50 dark:bg-teal-950/60 text-teal-700 dark:text-teal-300 flex items-center justify-center">
@@ -1067,7 +1188,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         </div>
       </div>
 
-      {/* 5. YÖNETİM VE SIFIRLAMA */}
+      {/* 8. YÖNETİM VE SIFIRLAMA */}
       <div className="rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 p-4 sm:p-5 shadow-sm space-y-3">
         <h4 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
           Yönetim & Sıfırlama
@@ -1102,7 +1223,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         </div>
       </div>
 
-      {/* 5.5. FIREBASE KURULUM REHBERİ */}
+      {/* 9. FIREBASE KURULUM REHBERİ */}
       <div className="rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 p-4 sm:p-5 shadow-sm space-y-3">
         <button
           type="button"
@@ -1155,7 +1276,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         )}
       </div>
 
-      {/* 6. UYGULAMA HAKKINDA */}
+      {/* 10. UYGULAMA HAKKINDA */}
       <div className="rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 p-4 sm:p-5 shadow-sm space-y-2">
         <div className="flex items-center gap-2 text-slate-800 dark:text-slate-100 text-xs font-bold">
           <Info className="w-4 h-4 text-teal-600" />
