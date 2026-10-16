@@ -18,6 +18,13 @@ import { ThemeMode } from '../hooks/useTheme';
 import { useOnlineStatus } from '../hooks/useOnlineStatus';
 import { usePWAInstall } from '../hooks/usePWAInstall';
 
+export interface ModuleSettings {
+  showSchool: boolean;
+  showStudy: boolean;
+  showEnglish: boolean;
+  showNotes: boolean;
+}
+
 interface SidebarProps {
   activeTab: TabId;
   onTabChange: (tab: TabId) => void;
@@ -30,6 +37,7 @@ interface SidebarProps {
   onToggleTheme: () => void;
   onOpenSearch: () => void;
   onOpenInstallGuide: () => void;
+  moduleSettings?: ModuleSettings;
 }
 
 interface NavItem {
@@ -50,13 +58,19 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onToggleTheme,
   onOpenSearch,
   onOpenInstallGuide,
+  moduleSettings = {
+    showSchool: true,
+    showStudy: true,
+    showEnglish: true,
+    showNotes: true,
+  },
 }) => {
   const isOnline = useOnlineStatus();
   const { isInstalled, isInstallable, install } = usePWAInstall();
 
   const badgeCount = reviewBadge !== undefined ? reviewBadge : englishDueCount;
 
-  const navItems: NavItem[] = [
+  const allNavItems: NavItem[] = [
     { id: 'bugun', label: 'Bugün', icon: Calendar },
     { id: 'ogrenciler', label: 'Okul', icon: Users },
     { id: 'calisma', label: 'Çalışma', icon: BookOpen, badge: upcomingExamsBadge },
@@ -64,6 +78,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'notlar', label: 'Notlar', icon: StickyNote },
     { id: 'ayarlar', label: 'Ayarlar', icon: Settings },
   ];
+
+  // Modül ayarlarına göre sekmeleri filtrele
+  const navItems = allNavItems.filter((item) => {
+    if (item.id === 'ogrenciler' && !moduleSettings.showSchool) return false;
+    if (item.id === 'calisma' && !moduleSettings.showStudy) return false;
+    if (item.id === 'ingilizce' && !moduleSettings.showEnglish) return false;
+    if (item.id === 'notlar' && !moduleSettings.showNotes) return false;
+    return true;
+  });
 
   const handleInstallClick = () => {
     if (isInstallable) {
