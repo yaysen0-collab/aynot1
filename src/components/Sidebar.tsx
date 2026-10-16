@@ -99,7 +99,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
           return (
             <button
               key={item.id}
-              onClick={() => onTabChange(item.id)}
+             onClick={() => {
+              if (isActive) return;
+                onTabChange(item.id);
+              }}
               className={`w-full flex items-center justify-between px-3.5 py-3 rounded-2xl text-sm font-semibold transition-all duration-200 text-left active:scale-[0.98] ${
                 isActive
                   ? 'bg-teal-600 text-white shadow-md shadow-teal-600/20'
