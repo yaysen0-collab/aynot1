@@ -285,7 +285,8 @@ export default function App() {
     universityNotesCount: 0,
     personalNotesCount: 0,
   });
-  const [isLoading, setIsLoading] = useState(true);
+  // Girişte 3-4 saniye bekletmemek için isLoading varsayılan olarak false başlatıldı
+  const [isLoading, setIsLoading] = useState(false);
 
   // Modals state
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -542,7 +543,7 @@ export default function App() {
   useEffect(() => {
     if (!currentUser) return;
 
-    setIsLoading(true);
+    // Ekranı bloklamaması için setIsLoading(true) çağrısı kaldırıldı
     setCloudSynced(false);
 
     const loaded = { students: false, sessions: false, settings: false };
@@ -550,9 +551,6 @@ export default function App() {
       loaded[key] = true;
       if (loaded.students && loaded.sessions && loaded.settings) setCloudSynced(true);
     };
-
-    // İnternet yoksa ve önbellek boşsa snapshot gelmeyabilir; sonsuz yükleme ekranında kalma
-    const loadingFallback = setTimeout(() => setIsLoading(false), 2500);
 
     const unsubscribe = subscribeToUserData(currentUser.uid, {
       onStudents: (items) => {
@@ -623,7 +621,6 @@ export default function App() {
     });
 
     return () => {
-      clearTimeout(loadingFallback);
       unsubscribe();
     };
   }, [currentUser]);
