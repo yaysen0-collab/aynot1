@@ -1,22 +1,18 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { 
-  X, 
-  Camera, 
-  Trash2, 
-  Calendar, 
-  Clock, 
-  AlertTriangle, 
-  Check, 
-  Mic,
-  Tag,
-  User,
-  FileText
-} from 'lucide-react';
+import { Camera, Trash2, Check, Mic, AlertTriangle } from 'lucide-react';
 import { Student, StudentNote, NoteCategory, SchoolNoteTag } from '../../types';
 import { ALL_SCHOOL_NOTE_TAGS, SCHOOL_NOTE_TAGS, getSchoolNoteTag } from '../../utils/schoolNoteUtils';
 import { VoiceInputButton } from '../common/VoiceInputButton';
-
+import {
+  NoteEditorShell,
+  AutoGrowTextarea,
+  NoteMetaCard,
+  NoteMetaRow,
+  NoteChipRow,
+  noteInputClass,
+} from '../common/NoteEditorShell';
 import { toLocalISODate } from '../../utils/calendar';
+
 interface StudentNoteModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -27,6 +23,8 @@ interface StudentNoteModalProps {
   voiceNotesEnabled?: boolean;
   autoStartVoice?: boolean;
 }
+
+const nowTime = (d: Date) => `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
 
 export const StudentNoteModal: React.FC<StudentNoteModalProps> = ({
   isOpen,
@@ -50,36 +48,53 @@ export const StudentNoteModal: React.FC<StudentNoteModalProps> = ({
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const initialSnapRef = useRef<string>('');
+
+  const snapshot = (v: {
+    title: string;
+    studentId: string;
+    tag: string;
+    date: string;
+    time: string;
+    content: string;
+    photo: string | null;
+  }) => JSON.stringify(v);
 
   useEffect(() => {
-    if (isOpen) {
-      if (noteToEdit) {
-        setTitle(noteToEdit.title || '');
-        setSelectedStudentId(noteToEdit.studentId || '');
-        setTag(getSchoolNoteTag(noteToEdit));
-        setDate(noteToEdit.date);
-        setTime(noteToEdit.time || '');
-        setContent(noteToEdit.content);
-        setPhotoUrl(noteToEdit.photoUrl || null);
-      } else {
-        setTitle('');
-        setSelectedStudentId(targetStudentId || '');
-        setTag('ogrenci');
-        const now = new Date();
-        setDate(toLocalISODate(now));
-        setTime(
-          `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
-        );
-        setContent('');
-        setPhotoUrl(null);
-      }
-      setError(null);
+    if (!isOpen) return;
+    const now = new Date();
+    const init = noteToEdit
+      ? {
+          title: noteToEdit.title || '',
+          studentId: noteToEdit.studentId || '',
+          tag: getSchoolNoteTag(noteToEdit) as string,
+          date: noteToEdit.date,
+          time: noteToEdit.time || '',
+          content: noteToEdit.content,
+          photo: noteToEdit.photoUrl || null,
+        }
+      : {
+          title: '',
+          studentId: targetStudentId || '',
+          tag: 'ogrenci',
+          date: toLocalISODate(now),
+          time: nowTime(now),
+          content: '',
+          photo: null as string | null,
+        };
 
-      // Focus textarea or title
-      setTimeout(() => {
-        textareaRef.current?.focus();
-      }, 100);
-    }
+    setTitle(init.title);
+    setSelectedStudentId(init.studentId);
+    setTag(init.tag as SchoolNoteTag);
+    setDate(init.date);
+    setTime(init.time);
+    setContent(init.content);
+    setPhotoUrl(init.photo);
+    setError(null);
+    initialSnapRef.current = snapshot(init);
+
+    // Yeni notta doğrudan yazmaya başla (iPhone gibi); düzenlemede klavye kendiliğinden açılmasın
+    if (!noteToEdit) setTimeout(() => textareaRef.current?.focus(), 150);
   }, [isOpen, noteToEdit, targetStudentId]);
 
   if (!isOpen) return null;
@@ -117,8 +132,7 @@ export const StudentNoteModal: React.FC<StudentNoteModalProps> = ({
 
         return updated;
       } else {
-        const needSpace =
-          prev.length > 0 && !prev.endsWith(' ') && !prev.endsWith('\n');
+        const needSpace = prev.length > 0 && !prev.endsWith(' ') && !prev.endsWith('\n');
         return prev + (needSpace ? ' ' : '') + dictatedText;
       }
     });
@@ -171,8 +185,7 @@ export const StudentNoteModal: React.FC<StudentNoteModalProps> = ({
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async () => {
     if (!content.trim()) {
       setError('Lütfen not içeriğini yazınız.');
       return;
@@ -209,245 +222,165 @@ export const StudentNoteModal: React.FC<StudentNoteModalProps> = ({
     }
   };
 
-  const currentStudent = selectedStudentId 
-    ? students.find((s) => s.id === selectedStudentId) 
-    : null;
+  const currentStudent = selectedStudentId ? students.find((s) => s.id === selectedStudentId) : null;
+
+  const isDirty =
+    snapshot({
+      title,
+      studentId: selectedStudentId,
+      tag,
+      date,
+      time,
+      content,
+      photo: photoUrl,
+    }) !== initialSnapRef.current;
+
+  const dateText = date
+    ? new Date(`${date}T${time || '00:00'}`).toLocaleString('tr-TR', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+        ...(time ? { hour: '2-digit', minute: '2-digit' } : {}),
+      })
+    : undefined;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
-      <div
-        className="w-full max-w-lg bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200/90 dark:border-slate-800 overflow-hidden flex flex-col max-h-[92vh] animate-in zoom-in-95 duration-200"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Header */}
-        <div className="p-4 sm:p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-900/50">
-          <div>
-            <h2 className="text-base font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
-              <span>{noteToEdit ? 'Okul Notunu Düzenle' : 'Yeni Okul Notu Ekle'}</span>
-              {autoStartVoice && (
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-teal-100 dark:bg-teal-950/80 text-teal-800 dark:text-teal-300 flex items-center gap-1">
-                  <Mic className="w-3 h-3 text-teal-600" /> Sesli Giriş
-                </span>
-              )}
-            </h2>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              Öğrenci, veli, etkinlik veya malzeme notu
-            </p>
-          </div>
-          <button
-            onClick={onClose}
-            className="p-2 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
-          >
-            <X className="w-5 h-5" />
-          </button>
+    <NoteEditorShell
+      backLabel="Okul"
+      dateText={dateText}
+      title={title}
+      onTitleChange={setTitle}
+      titlePlaceholder="Başlık"
+      onTitleEnter={() => textareaRef.current?.focus()}
+      autoFocusTitle={false}
+      isSaving={isSubmitting}
+      isDirty={isDirty}
+      canSave={!!content.trim() && !!date}
+      onSave={handleSubmit}
+      onClose={onClose}
+      error={error}
+      onEmptyAreaClick={() => textareaRef.current?.focus()}
+      headerActions={
+        voiceNotesEnabled ? (
+          <VoiceInputButton onInsertText={handleInsertVoiceText} enabled={voiceNotesEnabled} compact />
+        ) : undefined
+      }
+    >
+      {autoStartVoice && (
+        <div className="mb-1">
+          <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-teal-100 dark:bg-teal-950/80 text-teal-800 dark:text-teal-300">
+            <Mic className="w-3 h-3 text-teal-600" /> Sesli Giriş
+          </span>
         </div>
+      )}
 
-        {/* Form Body */}
-        <form onSubmit={handleSubmit} className="p-4 sm:p-5 overflow-y-auto space-y-4 flex-1">
-          {error && (
-            <div className="p-3 rounded-2xl bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-900 text-rose-700 dark:text-rose-300 text-xs flex items-center gap-2">
-              <AlertTriangle className="w-4 h-4 flex-shrink-0" />
-              <span>{error}</span>
-            </div>
-          )}
-
-          {/* Başlık (İsteğe bağlı, boşsa ilk satır sayılır) */}
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5 flex items-center justify-between">
-              <span className="flex items-center gap-1.5">
-                <FileText className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />
-                <span>Not Başlığı</span>
-              </span>
-              <span className="text-[10px] text-slate-400 font-normal">Boşsa ilk satır başlık sayılır</span>
-            </label>
-            <input
-              type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="Örn: 23 Nisan Gösteri Planı (İsteğe bağlı)"
-              className="w-full px-3.5 py-2.5 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-600"
-            />
-          </div>
-
-          {/* Etiket Seçimi (öğrenci, veli, etkinlik, malzeme, diğer) */}
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-2 flex items-center gap-1.5">
-              <Tag className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />
-              <span>Etiket</span>
-            </label>
-            <div className="flex flex-wrap gap-2">
-              {ALL_SCHOOL_NOTE_TAGS.map((tagKey) => {
-                const meta = SCHOOL_NOTE_TAGS[tagKey];
-                const isSelected = tag === tagKey;
-
-                return (
-                  <button
-                    key={tagKey}
-                    type="button"
-                    onClick={() => setTag(tagKey)}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-medium transition flex items-center gap-1.5 border touch-manipulation active:scale-95 ${
-                      isSelected
-                        ? `${meta.badgeClass} ring-2 ring-teal-500/30 shadow-xs font-bold`
-                        : 'bg-slate-100 dark:bg-slate-800 border-transparent text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-750'
-                    }`}
-                  >
-                    <span className={`w-2 h-2 rounded-full ${meta.dotColor}`} />
-                    <span>{meta.label}</span>
-                    {isSelected && <Check className="w-3 h-3 stroke-[3]" />}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Öğrenci Bağlama (İSTEĞE BAĞLI) */}
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5 flex items-center justify-between">
-              <span className="flex items-center gap-1.5">
-                <User className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />
-                <span>Öğrenci Bağla</span>
-              </span>
-              <span className="text-[10px] text-slate-400 font-normal">İsteğe bağlı</span>
-            </label>
-            <select
-              value={selectedStudentId}
-              onChange={(e) => setSelectedStudentId(e.target.value)}
-              className="w-full px-3.5 py-2.5 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-600"
-            >
-              <option value="">— Öğrenci seçilmedi (Genel okul notu) —</option>
-              {students.map((st) => (
-                <option key={st.id} value={st.id}>
-                  {st.name} {st.group ? `(${st.group})` : ''}
-                </option>
-              ))}
-            </select>
-            {currentStudent?.healthAlert && (
-              <p className="mt-1.5 text-[11px] text-rose-600 dark:text-rose-400 flex items-center gap-1 font-semibold">
-                <AlertTriangle className="w-3 h-3" />
-                <span>Sağlık Uyarısı: {currentStudent.healthAlert}</span>
-              </p>
-            )}
-          </div>
-
-          {/* Date & Time */}
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5 flex items-center gap-1">
-                <Calendar className="w-3 h-3 text-slate-400" />
-                <span>Tarih *</span>
-              </label>
-              <input
-                type="date"
-                required
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-600"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5 flex items-center gap-1">
-                <Clock className="w-3 h-3 text-slate-400" />
-                <span>Saat</span>
-              </label>
-              <input
-                type="time"
-                value={time}
-                onChange={(e) => setTime(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-600"
-              />
-            </div>
-          </div>
-
-          {/* Note Content + Voice Input Button */}
-          <div>
-            <div className="flex items-center justify-between mb-1.5">
-              <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                Not İçeriği <span className="text-teal-600 font-bold">*</span>
-              </label>
-
-              {/* Voice Input Microphone Button */}
-              {voiceNotesEnabled && (
-                <VoiceInputButton
-                  onInsertText={handleInsertVoiceText}
-                  enabled={voiceNotesEnabled}
-                />
-              )}
-            </div>
-
-            <textarea
-              ref={textareaRef}
-              rows={4}
-              required
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              placeholder="Notunuzu buraya yazın veya ses butonuna basarak dikte edin..."
-              className="w-full px-3.5 py-2.5 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-600 resize-none placeholder:text-slate-400"
-            />
-          </div>
-
-          {/* Photo Attachment */}
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-              Fotoğraf Ekle (İsteğe bağlı)
-            </label>
-
-            {photoUrl ? (
-              <div className="relative rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-700 max-h-48 group bg-slate-900/5">
-                <img
-                  src={photoUrl}
-                  alt="Önizleme"
-                  className="w-full h-44 object-cover"
-                />
+      <NoteMetaCard>
+        <NoteMetaRow label="Etiket">
+          <NoteChipRow>
+            {ALL_SCHOOL_NOTE_TAGS.map((tagKey) => {
+              const meta = SCHOOL_NOTE_TAGS[tagKey];
+              const isSelected = tag === tagKey;
+              return (
                 <button
+                  key={tagKey}
                   type="button"
-                  onClick={handleRemovePhoto}
-                  className="absolute top-2 right-2 p-2 rounded-full bg-rose-600 text-white shadow-md hover:bg-rose-700 active:scale-95 transition"
-                  title="Fotoğrafı Kaldır"
+                  onClick={() => setTag(tagKey)}
+                  className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs transition flex items-center gap-1.5 border active:scale-95 ${
+                    isSelected
+                      ? `${meta.badgeClass} ring-2 ring-teal-500/40 font-bold`
+                      : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 font-medium'
+                  }`}
                 >
-                  <Trash2 className="w-4 h-4" />
+                  <span className={`w-2 h-2 rounded-full ${meta.dotColor}`} />
+                  <span>{meta.label}</span>
+                  {isSelected && <Check className="w-3 h-3 stroke-[3]" />}
                 </button>
-              </div>
-            ) : (
-              <div>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  onChange={handlePhotoUpload}
-                  className="hidden"
-                  id="note-photo-input"
-                />
-                <label
-                  htmlFor="note-photo-input"
-                  className="w-full flex items-center justify-center gap-2 p-3.5 rounded-2xl border border-dashed border-slate-300 dark:border-slate-700 hover:border-teal-500 bg-slate-50 dark:bg-slate-800/50 hover:bg-teal-50/50 dark:hover:bg-teal-950/20 text-slate-600 dark:text-slate-300 text-xs font-medium cursor-pointer transition"
-                >
-                  <Camera className="w-4 h-4 text-teal-600 dark:text-teal-400" />
-                  <span>Fotoğraf Çek veya Galeriden Seç</span>
-                </label>
-              </div>
-            )}
-          </div>
+              );
+            })}
+          </NoteChipRow>
+        </NoteMetaRow>
 
-          {/* Actions */}
-          <div className="pt-2 flex items-center justify-end gap-2.5">
+        <NoteMetaRow label="Öğrenci">
+          <select
+            value={selectedStudentId}
+            onChange={(e) => setSelectedStudentId(e.target.value)}
+            className={`${noteInputClass} cursor-pointer`}
+          >
+            <option value="">Seçilmedi (genel okul notu)</option>
+            {students.map((st) => (
+              <option key={st.id} value={st.id}>
+                {st.name} {st.group ? `(${st.group})` : ''}
+              </option>
+            ))}
+          </select>
+        </NoteMetaRow>
+
+        <NoteMetaRow label="Tarih">
+          <div className="flex items-center gap-2">
+            <input
+              type="date"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+              className={`${noteInputClass} flex-1`}
+            />
+            <input
+              type="time"
+              value={time}
+              onChange={(e) => setTime(e.target.value)}
+              className={`${noteInputClass} w-24 text-right`}
+            />
+          </div>
+        </NoteMetaRow>
+      </NoteMetaCard>
+
+      {currentStudent?.healthAlert && (
+        <p className="mb-1 text-[12px] text-rose-600 dark:text-rose-400 flex items-center gap-1 font-semibold">
+          <AlertTriangle className="w-3.5 h-3.5" />
+          <span>Sağlık Uyarısı: {currentStudent.healthAlert}</span>
+        </p>
+      )}
+
+      <AutoGrowTextarea
+        ref={textareaRef}
+        value={content}
+        onChange={(e) => setContent(e.target.value)}
+        placeholder="Not yazın veya sağ üstteki mikrofonla dikte edin..."
+      />
+
+      {/* Fotoğraf */}
+      <div className="mt-2 pb-4">
+        {photoUrl ? (
+          <div className="relative rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-900/5">
+            <img src={photoUrl} alt="Önizleme" className="w-full max-h-72 object-cover" />
             <button
               type="button"
-              onClick={onClose}
-              disabled={isSubmitting}
-              className="px-4 py-2.5 rounded-2xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 text-sm font-medium transition"
+              onClick={handleRemovePhoto}
+              className="absolute top-2 right-2 p-2 rounded-full bg-rose-600 text-white shadow-md hover:bg-rose-700 active:scale-95 transition"
+              title="Fotoğrafı Kaldır"
             >
-              Vazgeç
-            </button>
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="px-6 py-2.5 rounded-2xl bg-teal-600 hover:bg-teal-700 active:scale-95 text-white text-sm font-semibold shadow-md shadow-teal-700/20 transition disabled:opacity-50"
-            >
-              {isSubmitting ? 'Kaydediliyor...' : noteToEdit ? 'Notu Güncelle' : 'Notu Kaydet'}
+              <Trash2 className="w-4 h-4" />
             </button>
           </div>
-        </form>
+        ) : (
+          <div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handlePhotoUpload}
+              className="hidden"
+              id="note-photo-input"
+            />
+            <label
+              htmlFor="note-photo-input"
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 text-xs font-medium cursor-pointer active:scale-95 transition"
+            >
+              <Camera className="w-4 h-4 text-teal-600 dark:text-teal-400" />
+              <span>Fotoğraf Çek veya Galeriden Seç</span>
+            </label>
+          </div>
+        )}
       </div>
-    </div>
+    </NoteEditorShell>
   );
 };
