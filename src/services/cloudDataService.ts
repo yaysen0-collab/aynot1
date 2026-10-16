@@ -69,28 +69,28 @@ export interface CloudSubscriptions {
   onEnglishNotes?: (items: EnglishNote[]) => void;
   onEnglishDecks?: (items: EnglishDeck[]) => void;
   onEnglishCards?: (items: EnglishCard[]) => void;
-  onUniversityTerms?: (items: UniversityTerm[]) => void;
+  onUniversityTerms?: (items: UniversityTerm[], meta?: { fromCache: boolean }) => void;
   onUniversityCourses?: (items: UniversityCourse[]) => void;
   onUniversityExams?: (items: UniversityExam[]) => void;
   onUniversityNotes?: (items: UniversityNote[]) => void;
   onUniversityAssignments?: (items: UniversityAssignment[]) => void;
   onProjectIdeas?: (items: ProjectIdea[]) => void;
   onPersonalNotes?: (items: PersonalNote[]) => void;
-  onPersonalTags?: (items: PersonalNoteTag[]) => void;
+  onPersonalTags?: (items: PersonalNoteTag[], meta?: { fromCache: boolean }) => void;
   onSettings?: (settings: Record<string, any>) => void;
 }
 
 export function subscribeToUserData(uid: string, listeners: CloudSubscriptions): () => void {
   const unsubs: Unsubscribe[] = [];
 
-  const sub = <T>(collectionName: string, callback?: (data: T[]) => void) => {
+  const sub = <T>(collectionName: string, callback?: (data: T[], meta?: { fromCache: boolean }) => void) => {
     if (!callback) return;
     const colRef = collection(db, 'users', uid, collectionName);
     const unsub = onSnapshot(
       colRef,
       (snapshot) => {
         const items = snapshot.docs.map((docSnap) => docSnap.data() as T);
-        callback(items);
+        callback(items, { fromCache: snapshot.metadata.fromCache });
       },
       (error) => {
         console.warn(`Firestore subscription error for ${collectionName}:`, error);
