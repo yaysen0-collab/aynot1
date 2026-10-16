@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, lazy, Suspense } from 'react';
 import { 
   Student, 
   StudentNote, 
@@ -105,30 +105,39 @@ import { Header } from './components/Header';
 import { BottomNav, TabId } from './components/BottomNav';
 import { Sidebar } from './components/Sidebar';
 import { AynotLogo } from './components/common/AynotLogo';
-import { EnglishView } from './components/english/EnglishView';
-import { UniversityView } from './components/university/UniversityView';
-import { IdeasView } from './components/ideas/IdeasView';
 import { QuickIdeaModal } from './components/ideas/QuickIdeaModal';
-import { NotesView } from './components/notes/NotesView';
 import { QuickPersonalNoteModal } from './components/notes/QuickPersonalNoteModal';
-import { StudyContainerView, StudySubTab } from './components/study/StudyContainerView';
-import { NotesContainerView, NotesSubTab } from './components/notes/NotesContainerView';
-import { SchoolContainerView, SchoolSubTab } from './components/school/SchoolContainerView';
+import type { StudySubTab } from './components/study/StudyContainerView';
+import type { NotesSubTab } from './components/notes/NotesContainerView';
+import type { SchoolSubTab } from './components/school/SchoolContainerView';
+
+// Ağır sekmeler ilk açılışta değil, ilk kez açıldıklarında yüklenir (daha hızlı ilk açılış)
+const StudyContainerView = lazy(() =>
+  import('./components/study/StudyContainerView').then((m) => ({ default: m.StudyContainerView }))
+);
+const NotesContainerView = lazy(() =>
+  import('./components/notes/NotesContainerView').then((m) => ({ default: m.NotesContainerView }))
+);
+const SchoolContainerView = lazy(() =>
+  import('./components/school/SchoolContainerView').then((m) => ({ default: m.SchoolContainerView }))
+);
+const EnglishView = lazy(() =>
+  import('./components/english/EnglishView').then((m) => ({ default: m.EnglishView }))
+);
+const SettingsView = lazy(() =>
+  import('./components/settings/SettingsView').then((m) => ({ default: m.SettingsView }))
+);
 import { isCardDueToday, calculateNextReview } from './utils/englishUtils';
 import { getExamCountdown, getExamTypeTitle } from './utils/universityUtils';
 import { COMMON_EXAM_GROUP, storeCommonExam, clearStoredCommonExam } from './utils/commonExam';
 import { FloatingActionButton } from './components/FloatingActionButton';
 import { GlobalSearchModal } from './components/GlobalSearchModal';
 import { TodayView } from './components/today/TodayView';
-import { StudentsView } from './components/students/StudentsView';
-import { StudentDetailView } from './components/students/StudentDetailView';
 import { StudentModal } from './components/students/StudentModal';
 import { StudentNoteModal } from './components/students/StudentNoteModal';
-import { SettingsView } from './components/settings/SettingsView';
 import { PWAInstallModal } from './components/PWAInstallModal';
 import { ParentCallsModal } from './components/parentCalls/ParentCallsModal';
 import { ParentCallsHistoryModal } from './components/parentCalls/ParentCallsHistoryModal';
-import { StudyView } from './components/study/StudyView';
 import { StudyTaskModal } from './components/study/StudyTaskModal';
 import { PomodoroModal } from './components/study/PomodoroModal';
 import { getOrCreateCurrentSession, MissedCallInfo } from './services/parentCallService';
@@ -538,7 +547,7 @@ export default function App() {
     };
 
     // İnternet yoksa ve önbellek boşsa snapshot gelmeyebilir; sonsuz yükleme ekranında kalma
-    const loadingFallback = setTimeout(() => setIsLoading(false), 8000);
+    const loadingFallback = setTimeout(() => setIsLoading(false), 2500);
 
     const unsubscribe = subscribeToUserData(currentUser.uid, {
       onStudents: (items) => {
@@ -562,7 +571,7 @@ export default function App() {
       onEnglishNotes: (items) => setEnglishNotes(items),
       onEnglishDecks: (items) => setEnglishDecks(items),
       onEnglishCards: (items) => setEnglishCards(items),
-      onUniversityTerms: (items) => {
+      onUniversityTerms: (items, meta) => {
         if (items.length === 0) {
           const defaultTerm: UniversityTerm = {
             id: 'term-guz-2026',
@@ -572,7 +581,10 @@ export default function App() {
             createdAt: Date.now(),
             updatedAt: Date.now(),
           };
-          saveUniversityTermCloud(currentUser.uid, defaultTerm).catch(() => {});
+          // Boş önbellekten gelen ilk yanıtta yazma: sunucudaki gerçek dönem verisini ezmesin
+          if (!meta?.fromCache) {
+            saveUniversityTermCloud(currentUser.uid, defaultTerm).catch(() => {});
+          }
           setUniversityTerms([defaultTerm]);
         } else {
           setUniversityTerms(items);
@@ -584,11 +596,13 @@ export default function App() {
       onUniversityAssignments: (items) => setUniversityAssignments(items),
       onProjectIdeas: (items) => setProjectIdeas(items),
       onPersonalNotes: (items) => setPersonalNotes(items),
-      onPersonalTags: (items) => {
+      onPersonalTags: (items, meta) => {
         if (items.length === 0) {
-          DEFAULT_PERSONAL_TAGS.forEach((tag) => {
-            savePersonalTagCloud(currentUser.uid, tag).catch(() => {});
-          });
+          if (!meta?.fromCache) {
+            DEFAULT_PERSONAL_TAGS.forEach((tag) => {
+              savePersonalTagCloud(currentUser.uid, tag).catch(() => {});
+            });
+          }
           setPersonalTags(DEFAULT_PERSONAL_TAGS);
         } else {
           setPersonalTags(items);
@@ -1884,7 +1898,13 @@ export default function App() {
               <p className="text-xs font-medium text-slate-500 dark:text-slate-400">Aynot. hazırlanıyor...</p>
             </div>
           ) : (
-          <>
+          <Suspense
+            fallback={
+              <div className="flex justify-center py-24">
+                <div className="w-6 h-6 rounded-full border-2 border-teal-600 border-t-transparent animate-spin" />
+              </div>
+            }
+          >
             {/* TAB 1: Bugün (Today) */}
             {activeTab === 'bugun' && (
               <TodayView
@@ -2092,7 +2112,7 @@ export default function App() {
                 onImportCloudBackup={currentUser ? handleImportCloudBackup : undefined}
               />
             )}
-          </>
+          </Suspense>
         )}
       </main>
       </div>
