@@ -202,8 +202,13 @@ const REQUIRE_LOGIN = true;
 export default function App() {
   const { theme, setTheme, resolvedTheme, toggleTheme } = useTheme();
 
-  // Navigation state
-  const [activeTab, setActiveTab] = useState<TabId>('bugun');
+  // Navigation state (Sadece bu kısım koruyucu fonksiyon ile güncellendi)
+  const [activeTab, setActiveTabRaw] = useState<TabId>('bugun');
+
+  const setActiveTab = useCallback((newTab: TabId) => {
+    setActiveTabRaw((prevTab) => (prevTab === newTab ? prevTab : newTab));
+  }, []);
+
   const [schoolSubTab, setSchoolSubTab] = useState<SchoolSubTab>('notlar');
   const [studySubTab, setStudySubTab] = useState<StudySubTab>('plan');
   const [notesSubTab, setNotesSubTab] = useState<NotesSubTab>('notlar');
@@ -546,7 +551,7 @@ export default function App() {
       if (loaded.students && loaded.sessions && loaded.settings) setCloudSynced(true);
     };
 
-    // İnternet yoksa ve önbellek boşsa snapshot gelmeyebilir; sonsuz yükleme ekranında kalma
+    // İnternet yoksa ve önbellek boşsa snapshot gelmeyabilir; sonsuz yükleme ekranında kalma
     const loadingFallback = setTimeout(() => setIsLoading(false), 2500);
 
     const unsubscribe = subscribeToUserData(currentUser.uid, {
