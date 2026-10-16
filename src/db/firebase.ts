@@ -48,7 +48,10 @@ function initFirestoreInstance(): Firestore {
       {
         localCache: persistentLocalCache({
           tabManager: persistentMultipleTabManager()
-        })
+        }),
+        // Bazı ağlarda (proxy, operatör filtreleri) akış bağlantısı kurulamaz ve SDK ~10 sn bekleyip
+        // yeniden dener; bu ayar durumu hemen algılayıp long-polling'e düşer.
+        experimentalAutoDetectLongPolling: true
       },
       dbId
     );
