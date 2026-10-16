@@ -111,6 +111,21 @@ import type { StudySubTab } from './components/study/StudyContainerView';
 import type { NotesSubTab } from './components/notes/NotesContainerView';
 import type { SchoolSubTab } from './components/school/SchoolContainerView';
 
+// Modül Ayarları Arayüzü (Sekmeleri açıp kapatmak için)
+export interface ModuleSettings {
+  showSchool: boolean;
+  showStudy: boolean;
+  showEnglish: boolean;
+  showNotes: boolean;
+}
+
+const DEFAULT_MODULE_SETTINGS: ModuleSettings = {
+  showSchool: true,
+  showStudy: true,
+  showEnglish: true,
+  showNotes: true,
+};
+
 // Ağır sekmeler ilk açılışta değil, ilk kez açıldıklarında yüklenir (daha hızlı ilk açılış)
 const StudyContainerView = lazy(() =>
   import('./components/study/StudyContainerView').then((m) => ({ default: m.StudyContainerView }))
@@ -202,7 +217,7 @@ const REQUIRE_LOGIN = true;
 export default function App() {
   const { theme, setTheme, resolvedTheme, toggleTheme } = useTheme();
 
-  // Navigation state (Sadece bu kısım koruyucu fonksiyon ile güncellendi)
+  // Navigation state
   const [activeTab, setActiveTabRaw] = useState<TabId>('bugun');
 
   const setActiveTab = useCallback((newTab: TabId) => {
@@ -215,6 +230,12 @@ export default function App() {
   const [selectedCourseIdForView, setSelectedCourseIdForView] = useState<string | null>(null);
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
   const [selectedSchoolNoteIdForView, setSelectedSchoolNoteIdForView] = useState<string | null>(null);
+
+  // Module Visibility State
+  const [moduleSettings, setModuleSettings] = useState<ModuleSettings>(() => {
+    const stored = localStorage.getItem('oa_module_settings');
+    return stored ? JSON.parse(stored) : DEFAULT_MODULE_SETTINGS;
+  });
 
   // Student & Note data
   const [students, setStudents] = useState<Student[]>([]);
@@ -285,7 +306,6 @@ export default function App() {
     universityNotesCount: 0,
     personalNotesCount: 0,
   });
-  // Girişte 3-4 saniye bekletmemek için isLoading varsayılan olarak false başlatıldı
   const [isLoading, setIsLoading] = useState(false);
 
   // Modals state
@@ -323,12 +343,18 @@ export default function App() {
   const [authLoading, setAuthLoading] = useState<boolean>(true);
   const [migrationSummary, setMigrationSummary] = useState<LocalDataSummary | null>(null);
   const [isMigrationModalOpen, setIsMigrationModalOpen] = useState(false);
-  // Öğrenciler + veli oturumları + ayarlar ilk kez buluttan geldi mi? (Haftalık oturumu ezmemek için bekleriz)
   const [cloudSynced, setCloudSynced] = useState(false);
+
+  // Güvenlik: Eğer kullanıcı bir sekmeyi kapattıysa ve o sekmedeyse onu Ana Sayfa'ya at
+  useEffect(() => {
+    if (activeTab === 'ogrenciler' && !moduleSettings.showSchool) setActiveTab('bugun');
+    if ((activeTab === 'calisma' || (activeTab as string) === 'universite') && !moduleSettings.showStudy) setActiveTab('bugun');
+    if ((activeTab === 'notlar' || (activeTab as string) === 'fikirler') && !moduleSettings.showNotes) setActiveTab('bugun');
+    if (activeTab === 'ingilizce' && !moduleSettings.showEnglish) setActiveTab('bugun');
+  }, [moduleSettings, activeTab, setActiveTab]);
 
   // Load all data from IndexedDB
   const refreshData = useCallback(async () => {
-    // Oturum açıkken tüm veri Firestore dinleyicilerinden gelir; IndexedDB'den okumak state'i eskiyle ezer.
     if (getRepositoryUserId()) return;
     try {
       const todayIso = toLocalISODate();
@@ -381,7 +407,6 @@ export default function App() {
         getDatabaseStats(),
       ]);
 
-      // Seed initial demo data on first start if totally empty so user gets a warm start
       let activeStudents = allSt;
       let activeNotes = allNt;
       let activeSessions = allSessions;
@@ -448,7 +473,6 @@ export default function App() {
         setStats(stStats);
       }
 
-      // If no terms exist, ensure default 2026-2027 Güz term
       if (activeUTerms.length === 0) {
         const defaultTerm: UniversityTerm = {
           id: 'term-guz-2026',
@@ -487,7 +511,6 @@ export default function App() {
       const uName = await getUserName();
       setUserName(uName || 'Zipidola');
 
-      // Initialize or sync this week's call session
       if (activeStudents.length > 0) {
         const { currentSession, missedCalls: missed } = await getOrCreateCurrentSession(
           activeStudents,
@@ -510,15 +533,12 @@ export default function App() {
   // Listen to Firebase Auth state
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      // Repository'yi önce güncelle: bundan sonraki tüm yazmalar doğru yere gitsin
       setRepositoryUser(user ? user.uid : null);
       setCurrentUser(user);
       setAuthLoading(false);
 
       if (user) {
-        // Profil belgesi (Google / yönlendirmeli girişlerde de) garanti altına alınır; hata girişi engellemez
         ensureUserProfile(user).catch((e) => console.warn('Profil oluşturulamadı:', e));
-
         try {
           if (!isUserMigrated(user.uid)) {
             const summary = await getLocalDataSummary();
@@ -542,8 +562,6 @@ export default function App() {
   // Subscribe to Realtime Firestore Collections for the authenticated user
   useEffect(() => {
     if (!currentUser) return;
-
-    // Ekranı bloklamaması için setIsLoading(true) çağrısı kaldırıldı
     setCloudSynced(false);
 
     const loaded = { students: false, sessions: false, settings: false };
@@ -584,7 +602,6 @@ export default function App() {
             createdAt: Date.now(),
             updatedAt: Date.now(),
           };
-          // Boş önbellekten gelen ilk yanıtta yazma: sunucudaki gerçek dönem verisini ezmesin
           if (!meta?.fromCache) {
             saveUniversityTermCloud(currentUser.uid, defaultTerm).catch(() => {});
           }
@@ -616,6 +633,10 @@ export default function App() {
         if (map['study_settings']) setStudySettings(map['study_settings']);
         if (map['english_settings']) setEnglishSettings(map['english_settings']);
         if (map['userName']) setUserName(map['userName']);
+        if (map['module_settings']) {
+          setModuleSettings(map['module_settings']);
+          localStorage.setItem('oa_module_settings', JSON.stringify(map['module_settings']));
+        }
         markLoaded('settings');
       }
     });
@@ -625,8 +646,6 @@ export default function App() {
     };
   }, [currentUser]);
 
-  // Bulut modunda: bu haftanın veli arama oturumunu oluştur / öğrencilerle senkronize et
-  // (yerel modda bu işi refreshData yapıyor)
   useEffect(() => {
     if (!currentUser || !cloudSynced) return;
     if (students.length === 0) {
@@ -647,7 +666,6 @@ export default function App() {
     };
   }, [currentUser, cloudSynced, students, callSessions, parentCallSettings]);
 
-  // Keep stats dynamically in sync
   useEffect(() => {
     setStats({
       studentsCount: students.length,
@@ -705,7 +723,8 @@ export default function App() {
         voiceNotesEnabled,
         studySettings,
         englishSettings,
-      }
+        moduleSettings,
+      } as any
     };
   };
 
@@ -713,7 +732,6 @@ export default function App() {
     if (!currentUser) return;
     const uid = currentUser.uid;
 
-    // "Üzerine yaz" seçildiyse önce hesaptaki mevcut veriler silinir (eskiden bu mod yok sayılıyordu)
     if (mode === 'overwrite') {
       await clearAllUserDataCloud(uid);
     }
@@ -784,6 +802,12 @@ export default function App() {
     if (backup.settings?.userName) {
       await saveSettingCloud(uid, 'userName', backup.settings.userName);
     }
+    if ((backup.settings as any)?.moduleSettings) {
+      const restoredModuleSettings = (backup.settings as any).moduleSettings;
+      await saveSettingCloud(uid, 'module_settings', restoredModuleSettings);
+      setModuleSettings(restoredModuleSettings);
+      localStorage.setItem('oa_module_settings', JSON.stringify(restoredModuleSettings));
+    }
   };
 
   const handleSaveUserName = async (name: string) => {
@@ -791,21 +815,26 @@ export default function App() {
     setUserName(name || 'Zipidola');
   };
 
+  const handleSaveModuleSettings = async (newSettings: ModuleSettings) => {
+    setModuleSettings(newSettings);
+    localStorage.setItem('oa_module_settings', JSON.stringify(newSettings));
+    if (currentUser) {
+      await saveSettingCloud(currentUser.uid, 'module_settings', newSettings);
+    }
+  };
+
   useEffect(() => {
-    // Giriş zorunluyken oturumsuz durumda yerel veri okunmaz (ve örnek veri tohumlanmaz)
     if (!currentUser && !authLoading && !REQUIRE_LOGIN) {
       refreshData();
     }
   }, [currentUser, authLoading, refreshData]);
 
-  // Reset scroll and guarantee body overflow is unlocked on tab change
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' });
     document.body.style.overflow = '';
     document.documentElement.style.overflow = '';
   }, [activeTab]);
 
-  // Check and trigger parent calls reminder notification
   useEffect(() => {
     if (!parentCallSettings.reminderEnabled) return;
 
@@ -836,7 +865,6 @@ export default function App() {
     return () => clearInterval(interval);
   }, [parentCallSettings]);
 
-  // Student CRUD handlers
   const handleSaveStudent = async (data: Partial<Student>) => {
     const now = Date.now();
     let studentToSave: Student;
@@ -877,7 +905,6 @@ export default function App() {
     await refreshData();
   };
 
-  // Note CRUD handlers
   const handleSaveNote = async (data: Partial<StudentNote>) => {
     const now = Date.now();
     let noteToSave: StudentNote;
@@ -916,14 +943,12 @@ export default function App() {
     await refreshData();
   };
 
-  // Parent Call Settings save
   const handleSaveParentCallSettings = async (newSettings: ParentCallSettings) => {
     await saveParentCallSettings(newSettings);
     setParentCallSettings(newSettings);
     await refreshData();
   };
 
-  // Update Call Session (called from ParentCallsModal)
   const handleUpdateCallSession = async (updatedSession: WeeklyCallSession) => {
     setCurrentCallSession(updatedSession);
     setCallSessions((prev) => {
@@ -938,8 +963,6 @@ export default function App() {
     await saveCallSession(updatedSession);
     await refreshData();
   };
-
-  // ---------------- Study Tasks & Fatigue Mode Handlers ----------------
 
   const handleToggleStudyTask = async (taskId: string, completed: boolean) => {
     const task = studyTasks.find((t) => t.id === taskId);
@@ -984,7 +1007,6 @@ export default function App() {
 
       const tasksToSave: StudyTask[] = [primaryTask];
 
-      // Replicate to other days if chosen
       for (const dIdx of replicateDayIndexes) {
         if (dIdx !== primaryTask.dayOfWeek) {
           tasksToSave.push({
@@ -1069,7 +1091,6 @@ export default function App() {
     setTodayCheckin(checkin);
   };
 
-  // Pomodoro timer start and duration save
   const handleStartPomodoro = (task: StudyTask) => {
     setActivePomodoroTask(task);
     setIsPomodoroOpen(true);
@@ -1095,7 +1116,6 @@ export default function App() {
     await refreshData();
   };
 
-  // Incomplete Tasks Actions (Postpone to tomorrow, other day, or delete)
   const handlePostponeIncompleteTasks = async (
     action: 'tomorrow' | 'target_day' | 'delete', 
     targetDayIndex?: number
@@ -1144,7 +1164,6 @@ export default function App() {
     await refreshData();
   };
 
-  // Fatigue Relief Actions (Halve duration, keep priority 1 task, or postpone all)
   const handleApplyFatigueRelief = async (
     action: 'halve_duration' | 'keep_priority_postpone_rest' | 'postpone_all'
   ) => {
@@ -1167,7 +1186,6 @@ export default function App() {
       }));
       await saveMultipleStudyTasks(updated);
     } else if (action === 'keep_priority_postpone_rest') {
-      // Keep the first task for today, move the rest to tomorrow
       const [firstTask, ...restTasks] = todayIncomplete;
 
       const tomorrow = new Date();
@@ -1184,7 +1202,6 @@ export default function App() {
       }));
 
       if (firstTask) {
-        // Lighten first task slightly too
         const updatedFirst: StudyTask = {
           ...firstTask,
           originalDuration: firstTask.originalDuration || firstTask.targetDurationMinutes,
@@ -1215,7 +1232,6 @@ export default function App() {
       await saveMultipleStudyTasks(updated);
     }
 
-    // Mark checkin as appliedLightPlan
     if (todayCheckin) {
       await saveDayCheckin({ ...todayCheckin, appliedLightPlan: true });
     }
@@ -1223,7 +1239,6 @@ export default function App() {
     await refreshData();
   };
 
-  // Quick Action Triggers
   const handleOpenQuickNote = (studentId?: string) => {
     setNoteToEdit(null);
     setNoteTargetStudentId(studentId || selectedStudentId || null);
@@ -1259,7 +1274,6 @@ export default function App() {
     setIsNoteModalOpen(true);
   };
 
-  // Study task trigger
   const handleOpenAddStudyTask = (defaultDate?: string, defaultDayOfWeek?: number) => {
     setStudyTaskToEdit(null);
     setStudyTaskDefaultDate(defaultDate);
@@ -1274,7 +1288,6 @@ export default function App() {
     setIsStudyTaskModalOpen(true);
   };
 
-  // English CRUD & Study handlers
   const handleSaveEnglishNote = async (note: Partial<EnglishNote>) => {
     const toSave: EnglishNote = {
       id: note.id || `eng-note-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
@@ -1395,7 +1408,6 @@ export default function App() {
     await refreshData();
   };
 
-  // University CRUD & Exam Handlers
   const handleSaveUniversityTerm = async (term: UniversityTerm) => {
     await saveUniversityTerm(term);
     await refreshData();
@@ -1411,7 +1423,6 @@ export default function App() {
     await refreshData();
   };
 
-  // Ortak sınav tarihi: giriş ekranında da gösterilebilsin diye bu cihaza yazılır
   useEffect(() => {
     const common = universityExams
       .filter((e) => e.commonGroup === COMMON_EXAM_GROUP)
@@ -1421,7 +1432,6 @@ export default function App() {
     }
   }, [universityExams]);
 
-  // Ortak tarih varsa, sonradan eklenen derslere de aynı sınavı otomatik oluştur
   const ensureCommonExamsForCourses = async (newCourses: UniversityCourse[]) => {
     const ref = universityExams
       .filter((e) => e.commonGroup === COMMON_EXAM_GROUP)
@@ -1464,7 +1474,6 @@ export default function App() {
         time: time || undefined,
         reminderDaysBefore: existing?.reminderDaysBefore ?? 3,
         resultStatus: existing?.resultStatus || 'pending',
-        // Tarih değiştiyse "3 gün kala çalışma görevi" sorusu yeniden sorulabilsin
         hasPromptedStudyTask: existing && existing.date === date ? existing.hasPromptedStudyTask : false,
         commonGroup: COMMON_EXAM_GROUP,
         createdAt: existing?.createdAt || now,
@@ -1477,7 +1486,6 @@ export default function App() {
   };
 
   const handleClearCommonExamDate = async () => {
-    // Sonucu girilmiş sınavlar silinmez
     const targets = universityExams.filter(
       (e) => e.commonGroup === COMMON_EXAM_GROUP && (!e.resultStatus || e.resultStatus === 'pending')
     );
@@ -1614,7 +1622,6 @@ export default function App() {
     await refreshData();
   };
 
-  // Result answer handler
   const handleSaveExamResult = async (
     examId: string, 
     resultStatus: ExamResultStatus, 
@@ -1656,7 +1663,6 @@ export default function App() {
     await refreshData();
   };
 
-  // Exam 3 days before -> add study task to study plan
   const handleAddExamStudyTasks = async (exam: UniversityExam, courseName: string) => {
     const todayStr = toLocalISODate();
     const dayOfWeek = new Date().getDay();
@@ -1674,7 +1680,6 @@ export default function App() {
       updatedAt: Date.now(),
     };
 
-    // Mark that user was prompted and accepted
     const updatedExam: UniversityExam = {
       ...exam,
       hasPromptedStudyTask: true,
@@ -1686,7 +1691,6 @@ export default function App() {
     await refreshData();
   };
 
-  // Project Idea Handlers
   const handleSaveProjectIdea = async (idea: Partial<ProjectIdea>, openDetail?: boolean) => {
     const newId = idea.id || `idea-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
     const toSave: ProjectIdea = {
@@ -1740,7 +1744,6 @@ export default function App() {
     setActiveTab('notlar');
   };
 
-  // Personal Notes & Tags Handlers
   const handleSavePersonalNote = async (note: PersonalNote) => {
     await savePersonalNote(note);
     await refreshData();
@@ -1770,7 +1773,6 @@ export default function App() {
     setActiveTab('notlar');
   };
 
-  // Search result jump actions
   const handleSelectStudentFromSearch = (studentId: string) => {
     setSelectedStudentId(studentId);
     setSchoolSubTab('ogrenciler');
@@ -1819,12 +1821,10 @@ export default function App() {
 
   const handleLogout = async () => {
     await logoutUser();
-    // Önceki kullanıcının verisi bellekte kalmasın, dinleyiciler tamamen sıfırlansın
     window.location.reload();
   };
 
   const handleClearLocalData = async () => {
-    // Yalnızca bu cihazdaki IndexedDB kopyası; buluttaki veriye dokunmaz
     await clearLocalDatabase();
   };
 
@@ -1888,6 +1888,7 @@ export default function App() {
         onToggleTheme={toggleTheme}
         onOpenSearch={() => setIsSearchOpen(true)}
         onOpenInstallGuide={() => setIsInstallGuideOpen(true)}
+        moduleSettings={moduleSettings} 
       />
 
       {/* Content wrapper with scroll on desktop */}
@@ -1926,6 +1927,7 @@ export default function App() {
                 projectIdeas={projectIdeas}
                 userName={userName}
                 personalNotes={personalNotes}
+                moduleSettings={moduleSettings}
                 onNavigateToStudents={() => {
                   setSelectedStudentId(null);
                   setSchoolSubTab('ogrenciler');
@@ -1973,7 +1975,7 @@ export default function App() {
             )}
 
             {/* TAB 2: Okul (Notlar | Veli aramaları | Öğrenciler) */}
-            {activeTab === 'ogrenciler' && (
+            {activeTab === 'ogrenciler' && moduleSettings.showSchool && (
               <SchoolContainerView
                 activeSubTab={schoolSubTab}
                 onSubTabChange={(subTab) => setSchoolSubTab(subTab)}
@@ -1999,7 +2001,7 @@ export default function App() {
             )}
 
             {/* TAB 3: Çalışma (Plan | Dersler | Sınavlar | Ders notları) */}
-            {(activeTab === 'calisma' || (activeTab as string) === 'universite') && (
+            {(activeTab === 'calisma' || (activeTab as string) === 'universite') && moduleSettings.showStudy && (
               <StudyContainerView
                 studyTasks={studyTasks}
                 dayConfigs={dayConfigs}
@@ -2046,7 +2048,7 @@ export default function App() {
             )}
 
             {/* TAB 4: Notlar (Notlar | Fikirler) */}
-            {(activeTab === 'notlar' || (activeTab as string) === 'fikirler') && (
+            {(activeTab === 'notlar' || (activeTab as string) === 'fikirler') && moduleSettings.showNotes && (
               <NotesContainerView
                 personalNotes={personalNotes}
                 personalTags={personalTags}
@@ -2068,7 +2070,7 @@ export default function App() {
             )}
 
             {/* TAB 6: İngilizce (English Notes & Flashcards) */}
-            {activeTab === 'ingilizce' && (
+            {activeTab === 'ingilizce' && moduleSettings.showEnglish && (
               <EnglishView
                 notes={englishNotes}
                 decks={englishDecks}
@@ -2100,6 +2102,8 @@ export default function App() {
                 onSaveStudySettings={handleSaveStudySettings}
                 englishSettings={englishSettings}
                 onSaveEnglishSettings={handleSaveEnglishSettings}
+                moduleSettings={moduleSettings}
+                onSaveModuleSettings={handleSaveModuleSettings}
                 stats={stats}
                 onRefreshData={refreshData}
                 onOpenInstallGuide={() => setIsInstallGuideOpen(true)}
@@ -2138,6 +2142,7 @@ export default function App() {
           setSelectedStudentId(null);
           setActiveTab(tab);
         }}
+        moduleSettings={moduleSettings} 
       />
 
       {/* Global Unified Search Modal */}
