@@ -7,8 +7,6 @@ import {
   CheckCircle2, 
   Coffee, 
   BookOpen, 
-  Plus, 
-  Volume2, 
   Sparkles,
   Minimize2,
   Maximize2
@@ -54,11 +52,10 @@ export const PomodoroModal: React.FC<PomodoroModalProps> = ({
       setIsRunning(false);
       setTotalWorkedSeconds(0);
       setIsCompletedAlert(false);
-      setIsExpanded(true); // Açıldığında her zaman genişletilmiş başlasın
+      setIsExpanded(true); 
     }
   }, [isOpen, task, settings]);
 
-  // Tick timer
   useEffect(() => {
     if (isRunning) {
       timerRef.current = setInterval(() => {
@@ -68,7 +65,7 @@ export const PomodoroModal: React.FC<PomodoroModalProps> = ({
             setIsRunning(false);
             playChimeSound();
             setIsCompletedAlert(true);
-            setIsExpanded(true); // Süre bitince uyarıyı göstermek için otomatik büyüt
+            setIsExpanded(true); 
             return 0;
           }
           return prev - 1;
@@ -134,9 +131,8 @@ export const PomodoroModal: React.FC<PomodoroModalProps> = ({
   };
 
   if (!isExpanded) {
-    // Küçültülmüş (Mini) Widget Görünümü
     return (
-      <div className="fixed bottom-28 md:bottom-8 left-4 md:left-[272px] lg:left-[312px] z-[100] bg-white dark:bg-slate-900 rounded-full shadow-2xl shadow-teal-900/10 border border-slate-200/90 dark:border-slate-800 flex items-center p-1.5 pr-2 gap-2 animate-in slide-in-from-bottom-5 duration-300">
+      <div className="fixed bottom-28 md:bottom-8 left-4 md:left-8 z-[100] bg-white dark:bg-slate-900 rounded-full shadow-2xl shadow-teal-900/10 border border-slate-200/90 dark:border-slate-800 flex items-center p-1.5 pr-2 gap-2 animate-in slide-in-from-bottom-5 duration-300">
         <button 
           onClick={() => setIsExpanded(true)}
           className="flex items-center gap-2.5 px-3 py-1.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition group"
@@ -165,9 +161,8 @@ export const PomodoroModal: React.FC<PomodoroModalProps> = ({
     );
   }
 
-  // Genişletilmiş (Tam) Widget Görünümü
   return (
-    <div className="fixed bottom-28 md:bottom-8 left-4 md:left-[272px] lg:left-[312px] z-[100] w-[280px] bg-white dark:bg-slate-900 rounded-3xl shadow-2xl shadow-teal-900/10 border border-slate-200/90 dark:border-slate-800 flex flex-col overflow-hidden animate-in slide-in-from-bottom-10 fade-in duration-300">
+    <div className="fixed bottom-28 md:bottom-8 left-4 md:left-8 z-[100] w-[280px] bg-white dark:bg-slate-900 rounded-3xl shadow-2xl shadow-teal-900/10 border border-slate-200/90 dark:border-slate-800 flex flex-col overflow-hidden animate-in slide-in-from-bottom-10 fade-in duration-300">
       {/* Üst İlerleme Çubuğu */}
       <div className="h-1.5 w-full bg-slate-100 dark:bg-slate-800">
         <div 
