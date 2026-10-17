@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   X, 
   RotateCw, 
@@ -7,14 +7,12 @@ import {
   HelpCircle, 
   XCircle, 
   Sparkles, 
-  Layers, 
   ArrowRight,
   RefreshCw,
-  Trophy,
-  Filter
+  Trophy
 } from 'lucide-react';
 import { EnglishCard, EnglishDeck, SpacedRepetitionRating } from '../../types';
-import { speakEnglish, calculateNextReview } from '../../utils/englishUtils';
+import { speakEnglish } from '../../utils/englishUtils';
 
 interface FlashcardStudyModalProps {
   isOpen: boolean;
@@ -33,6 +31,9 @@ export const FlashcardStudyModal: React.FC<FlashcardStudyModalProps> = ({
   onReviewCard,
   dailyReviewLimit = 20,
 }) => {
+  // Çalışma seansındaki kartların çökmemesi için alınan sabit kopya
+  const [localCards, setLocalCards] = useState<EnglishCard[]>([]);
+
   // Study session settings
   const [selectedDeckId, setSelectedDeckId] = useState<string>('all');
   const [direction, setDirection] = useState<'en_to_tr' | 'tr_to_en'>('en_to_tr');
@@ -49,10 +50,24 @@ export const FlashcardStudyModal: React.FC<FlashcardStudyModalProps> = ({
   const [testScore, setTestScore] = useState({ correct: 0, total: 0 });
   const [wrongCards, setWrongCards] = useState<EnglishCard[]>([]);
 
+  // Ekran her açıldığında kartların anlık görüntüsünü (snapshot) al
+  useEffect(() => {
+    if (isOpen) {
+      setLocalCards(cards);
+      setCurrentIndex(0);
+      setIsFlipped(false);
+      setSessionCompleted(false);
+      setSelectedOption(null);
+      setIsAnswerChecked(false);
+      setTestScore({ correct: 0, total: 0 });
+      setWrongCards([]);
+    }
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
-  // Filter study cards for today (or select from deck)
-  const studyDeckCards = cards.filter((c) => {
+  // Filtrelemeyi ana 'cards' üzerinden değil, sabit kalan 'localCards' üzerinden yapıyoruz
+  const studyDeckCards = localCards.filter((c) => {
     if (selectedDeckId === 'all') return true;
     return c.deckId === selectedDeckId;
   });
@@ -84,12 +99,12 @@ export const FlashcardStudyModal: React.FC<FlashcardStudyModalProps> = ({
     }
   };
 
-  // Generate options for Test Mode (1 correct + 3 random wrong options from same deck/cards)
+  // Generate options for Test Mode
   const generateTestOptions = () => {
     if (!currentCard) return [];
 
     const correctAnswer = direction === 'en_to_tr' ? currentCard.meaning : currentCard.word;
-    const pool = cards
+    const pool = localCards
       .filter((c) => c.id !== currentCard.id)
       .map((c) => (direction === 'en_to_tr' ? c.meaning : c.word));
 
@@ -144,6 +159,10 @@ export const FlashcardStudyModal: React.FC<FlashcardStudyModalProps> = ({
     setTestScore({ correct: 0, total: 0 });
     setWrongCards([]);
   };
+
+  // Güvenlik katmanı: Eğer sistem aktifken kart bulunamazsa çökmesini engeller
+  const isActivelyStudying = sessionCards.length > 0 && !sessionCompleted;
+  if (isActivelyStudying && !currentCard) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
