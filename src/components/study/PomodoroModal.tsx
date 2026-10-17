@@ -9,7 +9,9 @@ import {
   BookOpen, 
   Plus, 
   Volume2, 
-  Sparkles 
+  Sparkles,
+  Minimize2,
+  Maximize2
 } from 'lucide-react';
 import { StudyTask, StudySettings } from '../../types';
 import { getStudyTypeMeta, formatDuration } from '../../utils/studyUtils';
@@ -38,6 +40,7 @@ export const PomodoroModal: React.FC<PomodoroModalProps> = ({
   const [totalWorkedSeconds, setTotalWorkedSeconds] = useState(0);
   const [isCompletedAlert, setIsCompletedAlert] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(true);
 
   const timerRef = useRef<any>(null);
 
@@ -51,6 +54,7 @@ export const PomodoroModal: React.FC<PomodoroModalProps> = ({
       setIsRunning(false);
       setTotalWorkedSeconds(0);
       setIsCompletedAlert(false);
+      setIsExpanded(true); // Açıldığında her zaman genişletilmiş başlasın
     }
   }, [isOpen, task, settings]);
 
@@ -64,6 +68,7 @@ export const PomodoroModal: React.FC<PomodoroModalProps> = ({
             setIsRunning(false);
             playChimeSound();
             setIsCompletedAlert(true);
+            setIsExpanded(true); // Süre bitince uyarıyı göstermek için otomatik büyüt
             return 0;
           }
           return prev - 1;
@@ -128,177 +133,183 @@ export const PomodoroModal: React.FC<PomodoroModalProps> = ({
     }
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
-      <div
-        className="w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200/90 dark:border-slate-800 overflow-hidden flex flex-col animate-in zoom-in-95 duration-200"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Header */}
-        <div className="p-4 sm:p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/60 dark:bg-slate-900/60">
-          <div className="min-w-0 flex-1 pr-2">
-            <div className="flex items-center gap-2">
-              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md border ${typeMeta.badgeBg} ${typeMeta.badgeText}`}>
-                {typeMeta.label}
-              </span>
-              <span className="text-xs text-slate-400">Pomodoro Sayacı</span>
-            </div>
-            <h3 className="text-sm sm:text-base font-bold text-slate-800 dark:text-slate-100 truncate mt-1">
-              {task.title}
-            </h3>
-          </div>
+  if (!isExpanded) {
+    // Küçültülmüş (Mini) Widget Görünümü
+    return (
+      <div className="fixed bottom-20 md:bottom-8 left-4 md:left-8 z-[100] bg-white dark:bg-slate-900 rounded-full shadow-2xl shadow-teal-900/10 border border-slate-200/90 dark:border-slate-800 flex items-center p-1.5 pr-2 gap-2 animate-in slide-in-from-bottom-5 duration-300">
+        <button 
+          onClick={() => setIsExpanded(true)}
+          className="flex items-center gap-2.5 px-3 py-1.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition group"
+          title="Büyüt"
+        >
+          <div className={`w-2 h-2 rounded-full ${isRunning ? (mode === 'work' ? 'bg-teal-500 animate-pulse' : 'bg-amber-500 animate-pulse') : 'bg-slate-300 dark:bg-slate-600'}`} />
+          <span className="font-mono font-bold text-sm text-slate-800 dark:text-slate-100 group-hover:text-teal-600 transition">
+            {formattedTime}
+          </span>
+          <Maximize2 className="w-3 h-3 text-slate-400 group-hover:text-teal-600" />
+        </button>
+        
+        <div className="w-px h-5 bg-slate-200 dark:bg-slate-700" />
 
+        <button
+          onClick={() => setIsRunning(!isRunning)}
+          className={`p-2 rounded-full text-white shadow-sm transition active:scale-95 ${
+            isRunning 
+              ? 'bg-amber-500 hover:bg-amber-600 shadow-amber-500/20' 
+              : 'bg-teal-600 hover:bg-teal-700 shadow-teal-600/20'
+          }`}
+        >
+          {isRunning ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5 fill-white" />}
+        </button>
+      </div>
+    );
+  }
+
+  // Genişletilmiş (Tam) Widget Görünümü
+  return (
+    <div className="fixed bottom-20 md:bottom-8 left-4 md:left-8 z-[100] w-[280px] bg-white dark:bg-slate-900 rounded-3xl shadow-2xl shadow-teal-900/10 border border-slate-200/90 dark:border-slate-800 flex flex-col overflow-hidden animate-in slide-in-from-bottom-10 fade-in duration-300">
+      {/* Üst İlerleme Çubuğu */}
+      <div className="h-1.5 w-full bg-slate-100 dark:bg-slate-800">
+        <div 
+          className={`h-full transition-all duration-500 ${mode === 'work' ? 'bg-teal-500' : 'bg-amber-500'}`} 
+          style={{ width: `${progressPercent}%` }} 
+        />
+      </div>
+
+      {/* Header */}
+      <div className="px-4 py-3 border-b border-slate-100 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-900/60 flex items-center justify-between gap-2">
+        <div className="min-w-0 flex-1 flex items-center gap-2">
+          <span className={`flex-shrink-0 text-[9px] font-bold px-1.5 py-0.5 rounded border ${typeMeta.badgeBg} ${typeMeta.badgeText}`}>
+            {typeMeta.label}
+          </span>
+          <h3 className="text-xs font-semibold text-slate-700 dark:text-slate-200 truncate">
+            {task.title}
+          </h3>
+        </div>
+        <div className="flex items-center gap-0.5 flex-shrink-0">
+          <button
+            onClick={() => setIsExpanded(false)}
+            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 transition"
+            title="Küçült"
+          >
+            <Minimize2 className="w-3.5 h-3.5" />
+          </button>
           <button
             onClick={onClose}
-            className="p-2 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition"
+            title="Kapat"
           >
-            <X className="w-5 h-5" />
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      </div>
+
+      {/* Timer Body */}
+      <div className="p-5 flex flex-col items-center justify-center text-center">
+        
+        {/* Mod Seçimi */}
+        <div className="flex items-center gap-1 p-1 rounded-xl bg-slate-100 dark:bg-slate-800/80 mb-5">
+          <button
+            onClick={() => handleToggleMode('work')}
+            className={`px-3 py-1 rounded-lg text-[11px] font-semibold transition flex items-center gap-1.5 ${
+              mode === 'work'
+                ? 'bg-white dark:bg-slate-700 text-teal-600 dark:text-teal-400 shadow-sm'
+                : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
+            }`}
+          >
+            <BookOpen className="w-3 h-3" />
+            <span>Odak</span>
+          </button>
+          <button
+            onClick={() => handleToggleMode('break')}
+            className={`px-3 py-1 rounded-lg text-[11px] font-semibold transition flex items-center gap-1.5 ${
+              mode === 'break'
+                ? 'bg-white dark:bg-slate-700 text-amber-500 shadow-sm'
+                : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
+            }`}
+          >
+            <Coffee className="w-3 h-3" />
+            <span>Mola</span>
           </button>
         </div>
 
-        {/* Body Content */}
-        <div className="p-5 flex flex-col items-center justify-center text-center space-y-5">
-          {/* Work / Break Mode Pills */}
-          <div className="flex items-center gap-1.5 p-1 rounded-2xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
-            <button
-              onClick={() => handleToggleMode('work')}
-              className={`px-4 py-1.5 rounded-xl text-xs font-semibold transition flex items-center gap-1.5 ${
-                mode === 'work'
-                  ? 'bg-teal-600 text-white shadow-sm'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-800'
-              }`}
-            >
-              <BookOpen className="w-3.5 h-3.5" />
-              <span>Çalışma ({workMinutes} dk)</span>
-            </button>
-            <button
-              onClick={() => handleToggleMode('break')}
-              className={`px-4 py-1.5 rounded-xl text-xs font-semibold transition flex items-center gap-1.5 ${
-                mode === 'break'
-                  ? 'bg-amber-500 text-white shadow-sm'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-800'
-              }`}
-            >
-              <Coffee className="w-3.5 h-3.5" />
-              <span>Mola ({breakMinutes} dk)</span>
-            </button>
-          </div>
-
-          {/* Large Countdown Display */}
-          <div className="relative w-56 h-56 rounded-full flex flex-col items-center justify-center border-8 border-slate-100 dark:border-slate-800 shadow-inner bg-slate-50/50 dark:bg-slate-850/50">
-            {/* SVG circle progress outline */}
-            <svg className="absolute inset-0 w-full h-full -rotate-90">
-              <circle
-                cx="112"
-                cy="112"
-                r="100"
-                className="stroke-transparent"
-                strokeWidth="8"
-                fill="none"
-              />
-              <circle
-                cx="112"
-                cy="112"
-                r="100"
-                className={`transition-all duration-500 ${
-                  mode === 'work' ? 'stroke-teal-600' : 'stroke-amber-500'
-                }`}
-                strokeWidth="8"
-                strokeDasharray="628"
-                strokeDashoffset={628 - (628 * progressPercent) / 100}
-                strokeLinecap="round"
-                fill="none"
-              />
-            </svg>
-
-            <div className="relative z-10 flex flex-col items-center">
-              <span className="text-4xl sm:text-5xl font-mono font-bold tracking-tight text-slate-800 dark:text-slate-100">
-                {formattedTime}
-              </span>
-              <span className="text-xs font-medium text-slate-400 mt-1">
-                {mode === 'work' ? 'Odaklanma Zamanı' : 'Dinlenme Zamanı'}
-              </span>
-            </div>
-          </div>
-
-          {/* Sound & Completion Alert Banner */}
-          {isCompletedAlert && (
-            <div className="w-full p-3.5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-200 text-xs font-bold flex items-center justify-center gap-2 animate-bounce">
-              <Sparkles className="w-4 h-4 text-emerald-600" />
-              <span>Süre tamamlandı! Harika bir odaklanma çıkardınız.</span>
-            </div>
-          )}
-
-          {/* Timer Controls: Play/Pause, +5m, Reset */}
-          <div className="flex items-center justify-center gap-3">
-            <button
-              onClick={handleReset}
-              className="p-3 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 active:scale-95 transition"
-              title="Sıfırla"
-            >
-              <RotateCcw className="w-4 h-4" />
-            </button>
-
-            <button
-              onClick={() => setIsRunning(!isRunning)}
-              className={`px-8 py-3.5 rounded-2xl text-white font-bold text-sm shadow-md transition active:scale-95 flex items-center gap-2 ${
-                isRunning
-                  ? 'bg-amber-600 hover:bg-amber-700 shadow-amber-600/20'
-                  : 'bg-teal-600 hover:bg-teal-700 shadow-teal-600/20'
-              }`}
-            >
-              {isRunning ? (
-                <>
-                  <Pause className="w-5 h-5" />
-                  <span>Duraklat</span>
-                </>
-              ) : (
-                <>
-                  <Play className="w-5 h-5 fill-white" />
-                  <span>{timeLeftSeconds === 0 ? 'Yeniden Başlat' : 'Başlat'}</span>
-                </>
-              )}
-            </button>
-
-            <button
-              onClick={handleAddFiveMinutes}
-              className="px-3 py-3 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 active:scale-95 transition text-xs font-bold"
-              title="+5 Dakika Ekle"
-            >
-              +5 dk
-            </button>
-          </div>
-
-          {/* Current Session Tracker info */}
-          <div className="text-xs text-slate-500 dark:text-slate-400">
-            Bu oturumda harcanan süre:{' '}
-            <strong className="text-teal-600 dark:text-teal-400 font-semibold">
-              {formatDuration(Math.round(totalWorkedSeconds / 60))}
-            </strong>
-          </div>
+        {/* Sayaç Metni */}
+        <div className="text-5xl sm:text-6xl font-mono font-bold tracking-tight text-slate-800 dark:text-slate-100 mb-1">
+          {formattedTime}
+        </div>
+        
+        <div className="text-[11px] font-medium text-slate-400 mb-5">
+          Bu oturumda harcanan süre: <strong className="text-teal-600 dark:text-teal-400">{formatDuration(Math.round(totalWorkedSeconds / 60))}</strong>
         </div>
 
-        {/* Footer Actions */}
-        <div className="p-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-900/60 flex items-center justify-between gap-2">
+        {/* Kontroller */}
+        <div className="flex items-center justify-center gap-2">
           <button
-            type="button"
-            onClick={() => handleFinishAndSave(false)}
-            disabled={isSubmitting}
-            className="px-3 py-2 rounded-xl text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-200/60 transition"
+            onClick={handleReset}
+            className="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 active:scale-95 transition"
+            title="Sıfırla"
           >
-            Süreyi Kaydet ve Çık
+            <RotateCcw className="w-4 h-4" />
           </button>
 
           <button
-            type="button"
-            onClick={() => handleFinishAndSave(true)}
-            disabled={isSubmitting}
-            className="px-4 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 active:scale-95 text-white text-xs font-semibold shadow-sm transition flex items-center gap-1.5"
+            onClick={() => setIsRunning(!isRunning)}
+            className={`px-6 py-2.5 rounded-2xl text-white font-bold text-sm shadow-md transition active:scale-95 flex items-center gap-2 ${
+              isRunning
+                ? 'bg-amber-600 hover:bg-amber-700 shadow-amber-600/20'
+                : 'bg-teal-600 hover:bg-teal-700 shadow-teal-600/20'
+            }`}
           >
-            <CheckCircle2 className="w-4 h-4" />
-            <span>Görevi Tamamlandı İşaretle</span>
+            {isRunning ? (
+              <>
+                <Pause className="w-4 h-4" />
+                <span>Duraklat</span>
+              </>
+            ) : (
+              <>
+                <Play className="w-4 h-4 fill-white" />
+                <span>Başlat</span>
+              </>
+            )}
+          </button>
+
+          <button
+            onClick={handleAddFiveMinutes}
+            className="px-2.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 active:scale-95 transition text-[11px] font-bold"
+            title="+5 Dakika Ekle"
+          >
+            +5 dk
           </button>
         </div>
+      </div>
+
+      {/* Süre Doldu Uyarısı */}
+      {isCompletedAlert && (
+        <div className="mx-4 mb-4 p-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-200 text-[11px] font-bold flex items-center justify-center gap-1.5 animate-pulse">
+          <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
+          <span>Süre tamamlandı! Harika iş.</span>
+        </div>
+      )}
+
+      {/* Footer / Kaydetme İşlemleri */}
+      <div className="p-3 border-t border-slate-100 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-900/60 flex flex-col gap-1.5">
+        <button
+          type="button"
+          onClick={() => handleFinishAndSave(true)}
+          disabled={isSubmitting}
+          className="w-full py-2.5 rounded-xl bg-teal-600 hover:bg-teal-700 active:scale-95 text-white text-xs font-semibold shadow-sm transition flex items-center justify-center gap-1.5"
+        >
+          <CheckCircle2 className="w-4 h-4" />
+          <span>Görevi Tamamlandı İşaretle</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => handleFinishAndSave(false)}
+          disabled={isSubmitting}
+          className="w-full py-2 rounded-xl text-[11px] font-medium text-slate-500 dark:text-slate-400 hover:bg-slate-200/60 dark:hover:bg-slate-800 transition"
+        >
+          Sadece Süreyi Kaydet ve Çık
+        </button>
       </div>
     </div>
   );
