@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { 
   X, 
   RotateCw, 
@@ -31,29 +31,29 @@ export const FlashcardStudyModal: React.FC<FlashcardStudyModalProps> = ({
   onReviewCard,
   dailyReviewLimit = 20,
 }) => {
-  // Çalışma seansındaki kartların çökmemesi için alınan sabit kopya
-  const [localCards, setLocalCards] = useState<EnglishCard[]>([]);
-
-  // Study session settings
+  // 1. KURAL: BÜTÜN HOOK'LAR EN ÜSTTE OLMALIDIR (if/return koşullarından önce)
+  const [studyCards, setStudyCards] = useState<EnglishCard[]>([]);
   const [selectedDeckId, setSelectedDeckId] = useState<string>('all');
   const [direction, setDirection] = useState<'en_to_tr' | 'tr_to_en'>('en_to_tr');
   const [mode, setMode] = useState<'flip' | 'test'>('flip');
 
-  // Study progress
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
   const [sessionCompleted, setSessionCompleted] = useState(false);
 
-  // Test Mode state
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [isAnswerChecked, setIsAnswerChecked] = useState(false);
   const [testScore, setTestScore] = useState({ correct: 0, total: 0 });
   const [wrongCards, setWrongCards] = useState<EnglishCard[]>([]);
 
-  // Ekran her açıldığında kartların anlık görüntüsünü (snapshot) al
+  // Modal açıldığında kartların "sabit" bir kopyasını alıyoruz ki işlem yaparken liste küçülüp uygulamayı çökertmesin.
   useEffect(() => {
     if (isOpen) {
-      setLocalCards(cards);
+      const filtered = selectedDeckId === 'all' 
+        ? cards 
+        : cards.filter(c => c.deckId === selectedDeckId);
+      
+      setStudyCards(filtered.slice(0, dailyReviewLimit));
       setCurrentIndex(0);
       setIsFlipped(false);
       setSessionCompleted(false);
@@ -62,19 +62,22 @@ export const FlashcardStudyModal: React.FC<FlashcardStudyModalProps> = ({
       setTestScore({ correct: 0, total: 0 });
       setWrongCards([]);
     }
-  }, [isOpen]);
+  }, [isOpen, selectedDeckId, dailyReviewLimit]); 
 
-  if (!isOpen) return null;
+  const currentCard = studyCards[currentIndex];
 
-  // Filtrelemeyi ana 'cards' üzerinden değil, sabit kalan 'localCards' üzerinden yapıyoruz
-  const studyDeckCards = localCards.filter((c) => {
-    if (selectedDeckId === 'all') return true;
-    return c.deckId === selectedDeckId;
-  });
+  // Test modu şıklarını oluşturan kanca (Hook kuralları gereği return'den önce yazıldı)
+  const currentOptions = useMemo(() => {
+    if (mode !== 'test' || !currentCard) return [];
 
-  // Limit to daily review limit
-  const sessionCards = studyDeckCards.slice(0, dailyReviewLimit);
-  const currentCard = sessionCards[currentIndex];
+    const correctAnswer = direction === 'en_to_tr' ? currentCard.meaning : currentCard.word;
+    const pool = studyCards
+      .filter((c) => c.id !== currentCard.id)
+      .map((c) => (direction === 'en_to_tr' ? c.meaning : c.word));
+
+    const shuffledPool = [...pool].sort(() => 0.5 - Math.random()).slice(0, 3);
+    return [correctAnswer, ...shuffledPool].sort(() => 0.5 - Math.random());
+  }, [currentIndex, mode, direction, currentCard?.id, studyCards]);
 
   const handleFlip = () => {
     setIsFlipped(!isFlipped);
@@ -89,7 +92,7 @@ export const FlashcardStudyModal: React.FC<FlashcardStudyModalProps> = ({
       setWrongCards((prev) => [...prev, currentCard]);
     }
 
-    if (currentIndex + 1 < sessionCards.length) {
+    if (currentIndex + 1 < studyCards.length) {
       setCurrentIndex((prev) => prev + 1);
       setIsFlipped(false);
       setSelectedOption(null);
@@ -98,26 +101,6 @@ export const FlashcardStudyModal: React.FC<FlashcardStudyModalProps> = ({
       setSessionCompleted(true);
     }
   };
-
-  // Generate options for Test Mode
-  const generateTestOptions = () => {
-    if (!currentCard) return [];
-
-    const correctAnswer = direction === 'en_to_tr' ? currentCard.meaning : currentCard.word;
-    const pool = localCards
-      .filter((c) => c.id !== currentCard.id)
-      .map((c) => (direction === 'en_to_tr' ? c.meaning : c.word));
-
-    // Shuffle pool and take 3
-    const shuffledPool = [...pool].sort(() => 0.5 - Math.random()).slice(0, 3);
-    const options = [correctAnswer, ...shuffledPool].sort(() => 0.5 - Math.random());
-    return options;
-  };
-
-  const currentOptions = React.useMemo(() => {
-    if (mode !== 'test' || !currentCard) return [];
-    return generateTestOptions();
-  }, [currentIndex, mode, direction, currentCard?.id]);
 
   const handleSelectOption = (option: string) => {
     if (isAnswerChecked || !currentCard) return;
@@ -141,7 +124,7 @@ export const FlashcardStudyModal: React.FC<FlashcardStudyModalProps> = ({
   };
 
   const handleNextQuestion = () => {
-    if (currentIndex + 1 < sessionCards.length) {
+    if (currentIndex + 1 < studyCards.length) {
       setCurrentIndex((prev) => prev + 1);
       setSelectedOption(null);
       setIsAnswerChecked(false);
@@ -160,9 +143,8 @@ export const FlashcardStudyModal: React.FC<FlashcardStudyModalProps> = ({
     setWrongCards([]);
   };
 
-  // Güvenlik katmanı: Eğer sistem aktifken kart bulunamazsa çökmesini engeller
-  const isActivelyStudying = sessionCards.length > 0 && !sessionCompleted;
-  if (isActivelyStudying && !currentCard) return null;
+  // HOOK'LAR BİTTİ - Artık ekran gizleme (early return) işlemini güvenle yapabiliriz
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
@@ -194,9 +176,8 @@ export const FlashcardStudyModal: React.FC<FlashcardStudyModalProps> = ({
         </div>
 
         {/* Controls & Options Bar */}
-        {!sessionCompleted && sessionCards.length > 0 && (
+        {!sessionCompleted && studyCards.length > 0 && (
           <div className="px-4 py-2.5 bg-slate-100/70 dark:bg-slate-800/50 border-b border-slate-200/70 dark:border-slate-800 flex flex-wrap items-center justify-between gap-2 text-xs">
-            {/* Mode & Direction Toggles */}
             <div className="flex items-center gap-1.5">
               <button
                 onClick={() => setMode('flip')}
@@ -229,16 +210,15 @@ export const FlashcardStudyModal: React.FC<FlashcardStudyModalProps> = ({
               </button>
             </div>
 
-            {/* Progress counter */}
             <div className="font-semibold text-slate-600 dark:text-slate-400">
-              {currentIndex + 1} / {sessionCards.length}
+              {currentIndex + 1} / {studyCards.length}
             </div>
           </div>
         )}
 
         {/* Content Body */}
         <div className="flex-1 overflow-y-auto p-4 sm:p-6 flex flex-col justify-center items-center">
-          {sessionCards.length === 0 ? (
+          {studyCards.length === 0 ? (
             <div className="text-center py-12 space-y-3">
               <div className="w-14 h-14 mx-auto rounded-3xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 flex items-center justify-center">
                 <CheckCircle2 className="w-8 h-8" />
@@ -251,7 +231,6 @@ export const FlashcardStudyModal: React.FC<FlashcardStudyModalProps> = ({
               </p>
             </div>
           ) : sessionCompleted ? (
-            /* Results & Summary Screen */
             <div className="w-full text-center py-6 space-y-5 animate-in zoom-in-95 duration-200">
               <div className="w-16 h-16 mx-auto rounded-3xl bg-amber-100 dark:bg-amber-950/80 text-amber-600 dark:text-amber-400 flex items-center justify-center shadow-lg">
                 <Trophy className="w-8 h-8" />
@@ -261,7 +240,7 @@ export const FlashcardStudyModal: React.FC<FlashcardStudyModalProps> = ({
                   Tebrikler! Çalışma Seansı Tamamlandı
                 </h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                  {sessionCards.length} kart aralıklı tekrar algoritmasına göre güncellendi.
+                  {studyCards.length} kart aralıklı tekrar algoritmasına göre güncellendi.
                 </p>
               </div>
 
@@ -313,9 +292,7 @@ export const FlashcardStudyModal: React.FC<FlashcardStudyModalProps> = ({
               </div>
             </div>
           ) : mode === 'flip' ? (
-            /* Mode 1: Interactive Flip Card */
             <div className="w-full flex flex-col items-center space-y-5">
-              {/* Card Container */}
               <div
                 onClick={handleFlip}
                 className="w-full max-w-md min-h-[220px] p-6 rounded-3xl bg-gradient-to-br from-slate-50 to-white dark:from-slate-800 dark:to-slate-850 border-2 border-slate-200/90 dark:border-slate-700/80 shadow-xl flex flex-col justify-between items-center text-center cursor-pointer select-none transition-all duration-300 hover:scale-[1.01] active:scale-95"
@@ -370,7 +347,6 @@ export const FlashcardStudyModal: React.FC<FlashcardStudyModalProps> = ({
                 </div>
               </div>
 
-              {/* SM-2 Leitner Rating Buttons */}
               <div className="w-full max-w-md grid grid-cols-3 gap-2.5 pt-2">
                 <button
                   onClick={() => handleRating('bilmedim')}
@@ -401,7 +377,6 @@ export const FlashcardStudyModal: React.FC<FlashcardStudyModalProps> = ({
               </div>
             </div>
           ) : (
-            /* Mode 2: Multiple Choice Test Mode */
             <div className="w-full max-w-md space-y-4">
               <div className="p-5 rounded-3xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-center space-y-2">
                 <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
@@ -419,7 +394,6 @@ export const FlashcardStudyModal: React.FC<FlashcardStudyModalProps> = ({
                 </button>
               </div>
 
-              {/* Options */}
               <div className="space-y-2">
                 {currentOptions.map((opt, i) => {
                   const correctAnswer = direction === 'en_to_tr' ? currentCard.meaning : currentCard.word;
@@ -459,7 +433,7 @@ export const FlashcardStudyModal: React.FC<FlashcardStudyModalProps> = ({
                     onClick={handleNextQuestion}
                     className="px-5 py-2.5 rounded-2xl bg-teal-600 hover:bg-teal-700 text-white font-semibold text-xs sm:text-sm shadow-md transition flex items-center gap-1.5"
                   >
-                    <span>{currentIndex + 1 < sessionCards.length ? 'Sonraki Soru' : 'Sonucu Gör'}</span>
+                    <span>{currentIndex + 1 < studyCards.length ? 'Sonraki Soru' : 'Sonucu Gör'}</span>
                     <ArrowRight className="w-4 h-4" />
                   </button>
                 </div>
