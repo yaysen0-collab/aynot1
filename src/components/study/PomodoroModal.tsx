@@ -30,6 +30,7 @@ export const PomodoroModal: React.FC<PomodoroModalProps> = ({
   settings,
   onSaveTaskDuration,
 }) => {
+  const [isInitialized, setIsInitialized] = useState(false);
   const [mode, setMode] = useState<'work' | 'break'>('work');
   const [workMinutes, setWorkMinutes] = useState(settings.pomodoroWorkMinutes || 25);
   const [breakMinutes, setBreakMinutes] = useState(settings.pomodoroBreakMinutes || 5);
@@ -42,22 +43,80 @@ export const PomodoroModal: React.FC<PomodoroModalProps> = ({
 
   const timerRef = useRef<any>(null);
 
+  // Modal kapandığında veya görev değiştiğinde başlatma durumunu sıfırla
   useEffect(() => {
-    if (isOpen && task) {
-      const initialWork = task.targetDurationMinutes || settings.pomodoroWorkMinutes || 25;
-      setWorkMinutes(initialWork);
-      setBreakMinutes(settings.pomodoroBreakMinutes || 5);
-      setTimeLeftSeconds(initialWork * 60);
-      setMode('work');
-      setIsRunning(false);
-      setTotalWorkedSeconds(0);
-      setIsCompletedAlert(false);
-      setIsExpanded(true); 
+    if (!isOpen || !task) {
+      setIsInitialized(false);
     }
-  }, [isOpen, task, settings]);
+  }, [isOpen, task]);
 
+  // Sayaç başlatma ve LocalStorage'dan (hafızadan) verileri geri yükleme
   useEffect(() => {
-    if (isRunning) {
+    if (isOpen && task && !isInitialized) {
+      const storageKey = `aynot_pomodoro_${task.id}`;
+      const savedState = localStorage.getItem(storageKey);
+      
+      let restored = false;
+
+      if (savedState) {
+        try {
+          const parsed = JSON.parse(savedState);
+          let newTimeLeft = parsed.timeLeftSeconds;
+          let newIsRunning = parsed.isRunning;
+          let newTotalWorked = parsed.totalWorkedSeconds;
+
+          // Eğer sayaç çalışırken sayfa yenilendiyse veya kapatıldıysa geçen süreyi hesapla
+          if (parsed.isRunning && parsed.lastTickTime) {
+            const elapsedSeconds = Math.floor((Date.now() - parsed.lastTickTime) / 1000);
+            newTimeLeft -= elapsedSeconds;
+            
+            if (newTimeLeft <= 0) {
+              if (parsed.mode === 'work') {
+                newTotalWorked += parsed.timeLeftSeconds; // Sadece kalan süreyi ekle
+              }
+              newTimeLeft = 0;
+              newIsRunning = false;
+            } else {
+              if (parsed.mode === 'work') {
+                newTotalWorked += elapsedSeconds;
+              }
+            }
+          }
+
+          setMode(parsed.mode);
+          setWorkMinutes(parsed.workMinutes);
+          setBreakMinutes(parsed.breakMinutes);
+          setTimeLeftSeconds(Math.max(0, newTimeLeft));
+          setIsRunning(newIsRunning);
+          setTotalWorkedSeconds(newTotalWorked);
+          setIsCompletedAlert(newTimeLeft <= 0);
+          setIsExpanded(true);
+          restored = true;
+        } catch (e) {
+          console.error("Pomodoro hafızadan yüklenirken hata oluştu:", e);
+        }
+      }
+
+      // Eğer hafızada kayıt yoksa sıfırdan başlat
+      if (!restored) {
+        const initialWork = task.targetDurationMinutes || settings.pomodoroWorkMinutes || 25;
+        setWorkMinutes(initialWork);
+        setBreakMinutes(settings.pomodoroBreakMinutes || 5);
+        setTimeLeftSeconds(initialWork * 60);
+        setMode('work');
+        setIsRunning(false);
+        setTotalWorkedSeconds(0);
+        setIsCompletedAlert(false);
+        setIsExpanded(true);
+      }
+      
+      setIsInitialized(true);
+    }
+  }, [isOpen, task, settings, isInitialized]);
+
+  // Geri sayım (Tick) işlemi
+  useEffect(() => {
+    if (isRunning && isInitialized) {
       timerRef.current = setInterval(() => {
         setTimeLeftSeconds((prev) => {
           if (prev <= 1) {
@@ -82,7 +141,24 @@ export const PomodoroModal: React.FC<PomodoroModalProps> = ({
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [isRunning, mode]);
+  }, [isRunning, mode, isInitialized]);
+
+  // Herhangi bir değişiklik olduğunda (saniye dahil) durumu LocalStorage'a kaydet
+  useEffect(() => {
+    if (isOpen && task && isInitialized) {
+      const storageKey = `aynot_pomodoro_${task.id}`;
+      const stateToSave = {
+        mode,
+        workMinutes,
+        breakMinutes,
+        timeLeftSeconds,
+        isRunning,
+        totalWorkedSeconds,
+        lastTickTime: Date.now()
+      };
+      localStorage.setItem(storageKey, JSON.stringify(stateToSave));
+    }
+  }, [isOpen, task, mode, workMinutes, breakMinutes, timeLeftSeconds, isRunning, totalWorkedSeconds, isInitialized]);
 
   if (!isOpen || !task) return null;
 
@@ -124,6 +200,12 @@ export const PomodoroModal: React.FC<PomodoroModalProps> = ({
     try {
       const minutesSpent = Math.max(1, Math.round(totalWorkedSeconds / 60));
       await onSaveTaskDuration(task.id, minutesSpent, markAsDone);
+      
+      // Kaydedip çıkınca hafızadaki sayacı temizliyoruz (yeni başlatıldığında sıfır gelsin diye)
+      if (task) {
+        localStorage.removeItem(`aynot_pomodoro_${task.id}`);
+      }
+      
       onClose();
     } finally {
       setIsSubmitting(false);
@@ -132,7 +214,7 @@ export const PomodoroModal: React.FC<PomodoroModalProps> = ({
 
   if (!isExpanded) {
     return (
-      <div className="fixed bottom-28 md:bottom-8 left-4 md:left-8 z-[100] bg-white dark:bg-slate-900 rounded-full shadow-2xl shadow-teal-900/10 border border-slate-200/90 dark:border-slate-800 flex items-center p-1.5 pr-2 gap-2 animate-in slide-in-from-bottom-5 duration-300">
+      <div className="fixed bottom-28 md:bottom-8 left-4 md:left-[272px] lg:left-[312px] z-[100] bg-white dark:bg-slate-900 rounded-full shadow-2xl shadow-teal-900/10 border border-slate-200/90 dark:border-slate-800 flex items-center p-1.5 pr-2 gap-2 animate-in slide-in-from-bottom-5 duration-300">
         <button 
           onClick={() => setIsExpanded(true)}
           className="flex items-center gap-2.5 px-3 py-1.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition group"
@@ -162,8 +244,7 @@ export const PomodoroModal: React.FC<PomodoroModalProps> = ({
   }
 
   return (
-    <div className="fixed bottom-28 md:bottom-8 left-4 md:left-8 z-[100] w-[280px] bg-white dark:bg-slate-900 rounded-3xl shadow-2xl shadow-teal-900/10 border border-slate-200/90 dark:border-slate-800 flex flex-col overflow-hidden animate-in slide-in-from-bottom-10 fade-in duration-300">
-      {/* Üst İlerleme Çubuğu */}
+    <div className="fixed bottom-28 md:bottom-8 left-4 md:left-[272px] lg:left-[312px] z-[100] w-[280px] bg-white dark:bg-slate-900 rounded-3xl shadow-2xl shadow-teal-900/10 border border-slate-200/90 dark:border-slate-800 flex flex-col overflow-hidden animate-in slide-in-from-bottom-10 fade-in duration-300">
       <div className="h-1.5 w-full bg-slate-100 dark:bg-slate-800">
         <div 
           className={`h-full transition-all duration-500 ${mode === 'work' ? 'bg-teal-500' : 'bg-amber-500'}`} 
@@ -171,7 +252,6 @@ export const PomodoroModal: React.FC<PomodoroModalProps> = ({
         />
       </div>
 
-      {/* Header */}
       <div className="px-4 py-3 border-b border-slate-100 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-900/60 flex items-center justify-between gap-2">
         <div className="min-w-0 flex-1 flex items-center gap-2">
           <span className={`flex-shrink-0 text-[9px] font-bold px-1.5 py-0.5 rounded border ${typeMeta.badgeBg} ${typeMeta.badgeText}`}>
@@ -199,10 +279,8 @@ export const PomodoroModal: React.FC<PomodoroModalProps> = ({
         </div>
       </div>
 
-      {/* Timer Body */}
       <div className="p-5 flex flex-col items-center justify-center text-center">
         
-        {/* Mod Seçimi */}
         <div className="flex items-center gap-1 p-1 rounded-xl bg-slate-100 dark:bg-slate-800/80 mb-5">
           <button
             onClick={() => handleToggleMode('work')}
@@ -228,7 +306,6 @@ export const PomodoroModal: React.FC<PomodoroModalProps> = ({
           </button>
         </div>
 
-        {/* Sayaç Metni */}
         <div className="text-5xl sm:text-6xl font-mono font-bold tracking-tight text-slate-800 dark:text-slate-100 mb-1">
           {formattedTime}
         </div>
@@ -237,7 +314,6 @@ export const PomodoroModal: React.FC<PomodoroModalProps> = ({
           Bu oturumda harcanan süre: <strong className="text-teal-600 dark:text-teal-400">{formatDuration(Math.round(totalWorkedSeconds / 60))}</strong>
         </div>
 
-        {/* Kontroller */}
         <div className="flex items-center justify-center gap-2">
           <button
             onClick={handleReset}
@@ -278,7 +354,6 @@ export const PomodoroModal: React.FC<PomodoroModalProps> = ({
         </div>
       </div>
 
-      {/* Süre Doldu Uyarısı */}
       {isCompletedAlert && (
         <div className="mx-4 mb-4 p-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-200 text-[11px] font-bold flex items-center justify-center gap-1.5 animate-pulse">
           <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
@@ -286,7 +361,6 @@ export const PomodoroModal: React.FC<PomodoroModalProps> = ({
         </div>
       )}
 
-      {/* Footer / Kaydetme İşlemleri */}
       <div className="p-3 border-t border-slate-100 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-900/60 flex flex-col gap-1.5">
         <button
           type="button"
