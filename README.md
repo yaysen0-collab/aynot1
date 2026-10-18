@@ -89,7 +89,7 @@ firestore.rules            Güvenlik kuralları
 
 ## Veri modeli (Firestore)
 
-`users/{uid}` altındaki koleksiyonlar: `students`, `student_notes`, `parent_call_sessions`, `study_tasks`, `study_day_configs`, `day_checkins`, `english_notes`, `english_decks`, `english_cards`, `english_review_logs`, `university_terms`, `university_courses`, `university_exams`, `university_notes`, `university_assignments`, `project_ideas`, `personal_notes`, `personal_tags`, `settings`, `profile`.
+`users/{uid}` altındaki koleksiyonlar: `students`, `student_notes`, `parent_call_sessions`, `study_tasks`, `study_day_configs`, `day_checkins`, `english_notes`, `english_decks`, `english_cards`, `english_review_logs`, `university_terms`, `university_courses`, `university_exams`, `university_notes`, `university_assignments`, `project_ideas`, `personal_notes`, `personal_tags`, `settings`, `profile`, `app_errors` (uygulamanın kaydettiği hatalar).
 
 ## Yedekleme
 

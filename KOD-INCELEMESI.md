@@ -96,3 +96,21 @@
 - `src/App.tsx`: `oa_module_settings` okuması `try/catch` içine alındı; bozuk kayıt varsa varsayılan ayarlar kullanılır.
 
 **Not:** Bu güncellemeyi ilk kez alan telefonda hâlâ eski (autoUpdate) service worker çalıştığı için bir kez daha beyaz ekran görülebilir. Uygulamayı kapatıp açınca düzelir; sonraki güncellemelerde olmaz.
+
+## Hata kaydı ve sürüm bilgisi
+
+- **Ayarlar → Aynot. Hakkında:** Sürüm satırına derleme tarihi eklendi (`Derleme: 18.10.2026 14:32`). Telefonda çalışan kodun hangi derleme olduğunu gösterir; güncelleme geldi mi diye buradan bakılır. Değer `vite.config.ts` içindeki `define` ile `__BUILD_TIME__` olarak doldurulur (`src/utils/buildInfo.ts`).
+- **Ayarlar → Hata kayıtları (yeni kart):** Uygulamanın yakaladığı hatalar `users/{uid}/app_errors` altına yazılır. Kartta liste, **Tümünü kopyala**, **Temizle** ve kayıt hattını sınayan **Deneme kaydı** düğmesi var.
+- `src/services/errorLogService.ts`: ekran çizimi hatalarını (`ErrorBoundary`), `window.onerror` ve yakalanmamış `Promise` hatalarını kaydeder. Aynı hata tekrar yazılmaz, oturum başına en fazla 10 kayıt. Yazma başarısız olursa sessizce geçer. Giriş yapılmadan oluşan hatalar bekletilir, giriş sonrası yazılır.
+- **Gizlilik:** Not metni, öğrenci adı gibi içerik kaydedilmez; yalnızca hata mesajı, yığın izi, sayfa yolu, tarayıcı bilgisi, derleme ve çevrimiçi/ana ekran bilgisi tutulur. Mevcut Firestore kuralları (`users/{uid}/**` yalnızca sahibine açık) bu koleksiyonu da kapsar, kural değişikliği gerekmez.
+- Hata kayıtları "Tüm verileri sil" ile silinmez; karttaki **Temizle** ile silinir.
+
+## Otomatik uçtan uca test (E2E) bulguları
+
+- **İngilizce kartı listede görünmüyordu (gerçek hata):** `FlashcardManagerModal` sürekli bağlı kaldığı için seçili deste ve hedef deste yalnızca ilk çizimde okunuyordu. Pencere deste yokken çizildiyse hedef deste boş kalıyor, her kartta yeni bir "Genel Kelimeler" destesi oluşuyordu; deste filtresi başka bir desteyi gösterirken kart başka desteye eklenince listede görünmüyordu. Artık seçili/hedef deste her çizimde geçerli bir desteye bağlanıyor, kayıttan sonra liste kartın eklendiği desteye geçiyor.
+- **"Karta Çevir" taslağı (gerçek hata):** Aynı nedenle nottan seçilen kelime pencere açılınca kart formuna gelmiyordu. Pencere her açıldığında taslak yeniden yükleniyor.
+- **Not sıralaması:** Sıralama zaten gerçek `updatedAt` zaman damgasıyla yapılıyordu ("Bugün 12:48" yalnızca görüntü). Eksik `isPinned`/`updatedAt` değeri olan eski kayıtlarda karşılaştırıcı tutarsız sonuç verebiliyordu; sağlamlaştırıldı. Not: sabitlenmiş notlar sıralamadan bağımsız her zaman en üsttedir.
+- **Not arama / hızlı not:** Arama ve listeleme kodunda hata bulunamadı; kayıt yolu (`PersonalNoteModal` → `repository` → Firestore `onSnapshot`) mantıken doğru. Test ortamında yazma işleminin sunucuya ulaşıp ulaşmadığı ayrıca kontrol edilmeli.
+- **Odak günü:** Uygulamada böyle bir özellik yok (gün türleri yalnızca `okul_gunu` / `bos_gun`). Hata değil, eksik özellik.
+- **Seri (streak):** İngilizce ve Çalışma ekranlarında var, Bugün ekranında gösterilmiyor.
+- **Kayıt olma ("e-posta zaten kullanımda"):** Test ortamı sorunu; her çalıştırmada benzersiz e-posta kullanılmalı.
