@@ -8,7 +8,14 @@ import {
   updateProfile,
   User
 } from 'firebase/auth';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import {
+  clearIndexedDbPersistence,
+  doc,
+  getDoc,
+  setDoc,
+  terminate,
+  waitForPendingWrites
+} from 'firebase/firestore';
 import { saveSettingCloud } from './cloudDataService';
 import { auth, googleProvider, db } from '../db/firebase';
 
@@ -109,7 +116,33 @@ export async function resetPassword(email: string): Promise<void> {
  * Logout
  */
 export async function logoutUser(): Promise<void> {
+  // 1) Henüz sunucuya gitmemiş yazma var mı? En fazla 3 sn bekle (çevrimdışıysa zaman aşımına düşer).
+  let allSynced = false;
+  try {
+    allSynced = await Promise.race([
+      waitForPendingWrites(db).then(() => true),
+      new Promise<boolean>((resolve) => setTimeout(() => resolve(false), 3000))
+    ]);
+  } catch {
+    allSynced = false;
+  }
+
+  // 2) Oturumu kapat (çıkış her durumda yapılır)
   await signOut(auth);
+
+  // 3) Ortak cihazda bir sonraki kişi görmesin diye tarayıcıdaki çevrimdışı Firestore kopyasını (IndexedDB) sil.
+  //    Gönderilmemiş yazma varsa silme: veri kaybolmasın; bu hesapla yeniden girince kaldığı yerden gider.
+  if (!allSynced) {
+    console.warn('Çıkışta gönderilmemiş değişiklikler var; çevrimdışı kopya silinmedi.');
+    return;
+  }
+  try {
+    await terminate(db);
+    await clearIndexedDbPersistence(db);
+  } catch (e) {
+    // Başka sekme açıksa veya tarayıcı izin vermezse silinemez; çıkışı engellememeli
+    console.warn('Çevrimdışı kopya silinemedi:', e);
+  }
 }
 
 /**
