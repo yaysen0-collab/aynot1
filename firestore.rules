@@ -1,18 +1,55 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Default deny all access by default
+
+    // Giriş yapmış kullanıcı yalnızca kendi uid'sinin altına erişebilir.
+    function isOwner(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+
+    // Uygulamanın gerçekten kullandığı 21 koleksiyon
+    // (src/services/cloudDataService.ts içindeki USER_COLLECTIONS + authService.ts'deki 'profile').
+    // Yeni bir koleksiyon eklenirse buraya da eklenmelidir; aksi halde yazma/okuma reddedilir.
+    function isAppCollection(coll) {
+      return coll in [
+        'profile',
+        'students',
+        'student_notes',
+        'parent_call_sessions',
+        'study_tasks',
+        'study_day_configs',
+        'day_checkins',
+        'english_notes',
+        'english_decks',
+        'english_cards',
+        'english_review_logs',
+        'university_terms',
+        'university_courses',
+        'university_exams',
+        'university_notes',
+        'university_assignments',
+        'project_ideas',
+        'personal_notes',
+        'personal_tags',
+        'settings',
+        'photos'
+      ];
+    }
+
+    // Her şey varsayılan olarak kapalı
     match /{document=**} {
       allow read, write: if false;
     }
 
-    // Secure all user-scoped data strictly to the authenticated owner
-    match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+    // users/{uid}/{koleksiyon}/{belge}  (uygulama yalnızca bu tek seviyeyi kullanır)
+    match /users/{userId}/{coll}/{docId} {
+      allow read, delete: if isOwner(userId) && isAppCollection(coll);
 
-      match /{subcollection=**} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
-      }
+      // Bir belgede en fazla 100 alan: rastgele devasa belge yazmayı zorlaştırır
+      // (Firestore'un kendi 1 MB belge sınırı ayrıca geçerlidir).
+      allow create, update: if isOwner(userId)
+        && isAppCollection(coll)
+        && request.resource.data.size() <= 100;
     }
   }
 }
