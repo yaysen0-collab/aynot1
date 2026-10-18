@@ -10,7 +10,11 @@ export default defineConfig(() => {
       react(),
       tailwindcss(),
       VitePWA({
-        registerType: 'autoUpdate',
+        // 'prompt': yeni sürüm beklemede kalır, "Güncelle"ye basılınca devreye girer (bkz. UpdateBanner).
+        // 'autoUpdate' açık sayfanın kullandığı eski dosyaları arka planda silip beyaz ekrana yol açıyordu.
+        registerType: 'prompt',
+        // Kayıt işlemini UpdateBanner yapıyor (virtual:pwa-register).
+        injectRegister: false,
         includeAssets: ['apple-touch-icon.png', 'icon.svg'],
         manifest: {
           id: '/',
@@ -51,6 +55,7 @@ export default defineConfig(() => {
         },
         workbox: {
           globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}'],
+          cleanupOutdatedCaches: true,
           // Firebase ile ana paket varsayılan 2 MiB sınırını aşabilir; aşarsa build hata verir
           maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
         },

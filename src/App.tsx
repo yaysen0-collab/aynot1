@@ -226,8 +226,16 @@ export default function App() {
 
   // Module Visibility State
   const [moduleSettings, setModuleSettings] = useState<ModuleSettings>(() => {
-    const stored = localStorage.getItem('oa_module_settings');
-    return stored ? JSON.parse(stored) : DEFAULT_MODULE_SETTINGS;
+    // Bozuk/eksik kayıt uygulamayı çökertmesin: hata olursa varsayılanlara dön.
+    try {
+      const stored = localStorage.getItem('oa_module_settings');
+      if (!stored) return DEFAULT_MODULE_SETTINGS;
+      const parsed = JSON.parse(stored);
+      if (!parsed || typeof parsed !== 'object') return DEFAULT_MODULE_SETTINGS;
+      return { ...DEFAULT_MODULE_SETTINGS, ...parsed };
+    } catch {
+      return DEFAULT_MODULE_SETTINGS;
+    }
   });
 
   // Student & Note data

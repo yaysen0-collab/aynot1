@@ -82,3 +82,17 @@
 - Yükleme ekranı en fazla 2,5 sn (eskiden 8 sn) bekliyor; veri geldikçe ekran doluyor.
 - Ağır sekmeler (Çalışma, Okul, Notlar, İngilizce, Ayarlar) ilk açılışta değil, ilk açıldıklarında yükleniyor. Ana paketin boyutu yaklaşık üçte bire indi. Kullanılmayan ağır importlar (`UniversityView`, `IdeasView` vb.) `App.tsx`'ten kaldırıldı.
 - **Veri güvenliği düzeltmesi:** Yeni bir cihazda önbellek boşken gelen ilk (boş) yanıt, varsayılan dönemi ve kişisel etiketleri sunucuya yeniden yazıp mevcut verinin üzerine yazabilirdi. Artık varsayılanlar yalnızca sunucudan doğrulanmış boş yanıtta yazılıyor.
+
+## Güncellemeden sonra beyaz ekran (iPhone ana ekran uygulaması)
+
+**Neden:** `registerType: 'autoUpdate'` yeni sürümde eski dosyaları hemen siliyordu. Açık duran eski sayfa tembel yüklenen bir sekmeyi (Çalışma, Notlar, Okul, İngilizce, Ayarlar) açınca silinmiş dosyayı isteyip hata alıyordu. Hata yakalayan olmadığı için ekran beyaz kalıyordu. Uygulama kapanıp yeniden açılınca yeni sürüm yüklendiği için düzeliyordu.
+
+**Yapılanlar:**
+- `src/components/common/ErrorBoundary.tsx` (yeni): hata olursa beyaz ekran yerine "Yenile" / "Önbelleği temizle ve yenile" ekranı ve hata ayrıntısı gösterir. Eski sürüm kaynaklı dosya hatalarında sayfayı bir kez otomatik yeniler.
+- `src/utils/reloadGuard.ts` (yeni): hata türünü tanır; 20 saniye içinde ikinci kez otomatik yenilemez (döngü koruması).
+- `src/main.tsx`: uygulama `ErrorBoundary` ile sarıldı, `vite:preloadError` olayı yakalanıyor.
+- `src/components/common/UpdateBanner.tsx` (yeni): service worker'ı kaydeder; yeni sürüm hazırsa "Güncelle" bildirimi çıkar. Uygulamaya her dönüşte ve 30 dakikada bir güncelleme kontrol edilir.
+- `vite.config.ts`: `registerType: 'prompt'`, `injectRegister: false`. Yeni sürüm "Güncelle"ye basılana (veya uygulama tamamen kapanıp açılana) kadar beklemede kalır, eski dosyalar silinmez. Yazmakta olduğun not da habersizce yenilenmez.
+- `src/App.tsx`: `oa_module_settings` okuması `try/catch` içine alındı; bozuk kayıt varsa varsayılan ayarlar kullanılır.
+
+**Not:** Bu güncellemeyi ilk kez alan telefonda hâlâ eski (autoUpdate) service worker çalıştığı için bir kez daha beyaz ekran görülebilir. Uygulamayı kapatıp açınca düzelir; sonraki güncellemelerde olmaz.
