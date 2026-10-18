@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { 
   X, 
   Plus, 
@@ -69,11 +69,29 @@ export const FlashcardManagerModal: React.FC<FlashcardManagerModalProps> = ({
   // Search & Filter
   const [searchQuery, setSearchQuery] = useState('');
 
+  // Bu pencere sürekli bağlı kalır; state'ler ilk çizimdeki props ile dolduğu için pencere her
+  // açıldığında güncel taslakla ("Karta Çevir") ve geçerli destelerle yeniden eşitlenir.
+  useEffect(() => {
+    if (!isOpen) return;
+    setWord(initialWord);
+    setMeaning(initialMeaning);
+    setSelectedDeckId((prev) => (prev && !decks.some((d) => d.id === prev) ? '' : prev));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen]);
+
   if (!isOpen) return null;
+
+  // Seçili/hedef deste silinmiş ya da hiç belirlenmemişse (örn. pencere deste yokken çizildiyse)
+  // geçerli bir desteye düş. Böylece kart, ekranda görünen listedeki desteye eklenir.
+  const deckExists = (id: string) => Boolean(id) && decks.some((d) => d.id === id);
+  const activeSelectedDeckId = deckExists(selectedDeckId) ? selectedDeckId : '';
+  const activeTargetDeckId = deckExists(targetDeckId)
+    ? targetDeckId
+    : activeSelectedDeckId || decks[0]?.id || '';
 
   // Filtered Cards
   const displayedCards = cards.filter((c) => {
-    const matchesDeck = !selectedDeckId || c.deckId === selectedDeckId;
+    const matchesDeck = !activeSelectedDeckId || c.deckId === activeSelectedDeckId;
     const matchesSearch =
       !searchQuery ||
       c.word.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -86,7 +104,7 @@ export const FlashcardManagerModal: React.FC<FlashcardManagerModalProps> = ({
     e.preventDefault();
     if (!word.trim() || !meaning.trim()) return;
 
-    let deckToUse = targetDeckId;
+    let deckToUse = activeTargetDeckId;
     // If no deck exists, auto-create a default one
     if (!deckToUse) {
       const defaultDeck: EnglishDeck = {
@@ -98,6 +116,7 @@ export const FlashcardManagerModal: React.FC<FlashcardManagerModalProps> = ({
       };
       await onSaveDeck(defaultDeck);
       deckToUse = defaultDeck.id;
+      setTargetDeckId(defaultDeck.id);
     }
 
     setIsSavingCard(true);
@@ -120,6 +139,8 @@ export const FlashcardManagerModal: React.FC<FlashcardManagerModalProps> = ({
 
     try {
       await onSaveCard(newCard);
+      // Liste başka bir desteye filtreliyse yeni kart görünmez; o desteye geç
+      if (activeSelectedDeckId && activeSelectedDeckId !== deckToUse) setSelectedDeckId(deckToUse);
       setCardSaveSuccess(true);
       setTimeout(() => setCardSaveSuccess(false), 2000);
       // Reset input for lightning-fast consecutive adding, keep current target deck
@@ -295,7 +316,7 @@ export const FlashcardManagerModal: React.FC<FlashcardManagerModalProps> = ({
                     Deste
                   </label>
                   <select
-                    value={targetDeckId}
+                    value={activeTargetDeckId}
                     onChange={(e) => setTargetDeckId(e.target.value)}
                     className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
                   >
@@ -397,7 +418,7 @@ export const FlashcardManagerModal: React.FC<FlashcardManagerModalProps> = ({
               <button
                 onClick={() => setSelectedDeckId('')}
                 className={`px-3 py-1.5 rounded-full text-xs font-semibold transition ${
-                  selectedDeckId === ''
+                  activeSelectedDeckId === ''
                     ? 'bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900'
                     : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
                 }`}
@@ -406,7 +427,7 @@ export const FlashcardManagerModal: React.FC<FlashcardManagerModalProps> = ({
               </button>
               {decks.map((deck) => {
                 const count = cards.filter((c) => c.deckId === deck.id).length;
-                const isSelected = selectedDeckId === deck.id;
+                const isSelected = activeSelectedDeckId === deck.id;
                 return (
                   <div key={deck.id} className="relative group inline-flex items-center">
                     <button

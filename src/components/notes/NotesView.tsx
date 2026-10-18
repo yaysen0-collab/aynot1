@@ -129,15 +129,15 @@ export const NotesView: React.FC<NotesViewProps> = ({
       return true;
     }).sort((a, b) => {
       // Pinned notes always stay at top
-      if (a.isPinned !== b.isPinned) {
+      if (Boolean(a.isPinned) !== Boolean(b.isPinned)) {
         return a.isPinned ? -1 : 1;
       }
 
-      // Then sort by chosen criterion
+      // Then sort by chosen criterion (eksik zaman damgası NaN üretip sıralamayı bozmasın)
       if (sortBy === 'created') {
-        return b.createdAt - a.createdAt;
+        return (b.createdAt || 0) - (a.createdAt || 0);
       }
-      return b.updatedAt - a.updatedAt;
+      return (b.updatedAt || b.createdAt || 0) - (a.updatedAt || a.createdAt || 0);
     });
   }, [notes, showArchived, selectedTagFilters, searchQuery, tagsMap, sortBy]);
 

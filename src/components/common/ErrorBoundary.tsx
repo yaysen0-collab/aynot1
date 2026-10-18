@@ -1,4 +1,5 @@
 import React from 'react';
+import { logError } from '../../services/errorLogService';
 import { clearCachesAndReload, isChunkLoadError, reloadOnceForUpdate } from '../../utils/reloadGuard';
 
 interface ErrorBoundaryProps {
@@ -28,6 +29,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
 
   componentDidCatch(error: Error, info: React.ErrorInfo) {
     console.error('Uygulama hatası:', error, info.componentStack);
+    logError('render', error, info.componentStack ?? undefined);
     if (isChunkLoadError(error) && !reloadOnceForUpdate()) {
       // Yakın zamanda zaten yenilendi: döngüye girmemek için hata ekranını göster.
       this.setState({ reloading: false });

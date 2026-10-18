@@ -32,6 +32,8 @@ import {
   LayoutGrid
 } from 'lucide-react';
 import { ThemeMode } from '../../hooks/useTheme';
+import { ErrorLogCard } from './ErrorLogCard';
+import { getBuildLabel } from '../../utils/buildInfo';
 import { exportDatabase, importDatabase, seedSampleData } from '../../db/indexedDb';
 // Oturum açıksa hesabın bulut verisini, değilse yerel veriyi temizler
 import { clearAllDatabase as clearAllRepositoryData } from '../../db/repository';
@@ -1286,9 +1288,12 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           Aynot. — Kişisel takip, okul notları ve çalışma asistanı.
         </p>
         <div className="text-[11px] text-slate-400 dark:text-slate-500 pt-1">
-          Sürüm: Aynot. v1.0 • PWA
+          Sürüm: Aynot. v1.0 • PWA • Derleme: {getBuildLabel()}
         </div>
       </div>
+
+      {/* 11. HATA KAYITLARI */}
+      <ErrorLogCard />
 
       {/* MODAL 1: İÇE AKTARMA ÇAKIŞMA YÖNETİMİ MODALİ */}
       {showConflictModal && pendingBackup && (
