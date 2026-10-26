@@ -1,5 +1,5 @@
 import React from 'react';
-import { Search, Moon, Sun, Smartphone, WifiOff, Settings } from 'lucide-react';
+import { Search, Smartphone, WifiOff, Settings } from 'lucide-react';
 import { useOnlineStatus } from '../hooks/useOnlineStatus';
 import { usePWAInstall } from '../hooks/usePWAInstall';
 
@@ -9,9 +9,6 @@ interface HeaderProps {
   onOpenSearch: () => void;
   onOpenInstallGuide: () => void;
   onOpenSettings?: () => void;
-  theme: 'light' | 'dark' | 'system';
-  resolvedTheme: 'light' | 'dark';
-  onToggleTheme: () => void;
   activeTab: string;
 }
 
@@ -19,8 +16,6 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenSearch,
   onOpenInstallGuide,
   onOpenSettings,
-  resolvedTheme,
-  onToggleTheme,
   activeTab,
 }) => {
   const isOnline = useOnlineStatus();
@@ -70,20 +65,6 @@ export const Header: React.FC<HeaderProps> = ({
               <span className="hidden md:inline">Yükle</span>
             </button>
           )}
-
-          {/* Theme Toggle Button */}
-          <button
-            onClick={onToggleTheme}
-            className="p-2.5 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 active:scale-95 transition touch-manipulation"
-            aria-label="Temayı değiştir"
-            title={resolvedTheme === 'dark' ? 'Açık temaya geç' : 'Koyu temaya geç'}
-          >
-            {resolvedTheme === 'dark' ? (
-              <Sun className="w-4 h-4 text-amber-400" />
-            ) : (
-              <Moon className="w-4 h-4 text-slate-600" />
-            )}
-          </button>
 
           {/* Settings Button */}
           {onOpenSettings && (

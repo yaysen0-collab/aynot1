@@ -1854,9 +1854,6 @@ export default function App() {
           onOpenSearch={() => setIsSearchOpen(true)}
           onOpenInstallGuide={() => setIsInstallGuideOpen(true)}
           onOpenSettings={() => setActiveTab('ayarlar')}
-          theme={theme}
-          resolvedTheme={resolvedTheme}
-          onToggleTheme={toggleTheme}
           activeTab={activeTab}
         />
       </div>
