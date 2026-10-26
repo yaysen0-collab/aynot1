@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
-import { Plus, Edit3, UserPlus, Mic, Lightbulb, StickyNote } from 'lucide-react';
+import { Plus, Edit3, Mic, Lightbulb, StickyNote } from 'lucide-react';
 import type { ModuleSettings } from './BottomNav';
 
 interface FloatingActionButtonProps {
   onQuickNote: () => void;
   onVoiceQuickNote?: () => void;
-  onAddStudent: () => void;
   onQuickIdea?: () => void;
   onQuickPersonalNote?: () => void;
   voiceNotesEnabled?: boolean;
@@ -15,7 +14,6 @@ interface FloatingActionButtonProps {
 export const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({
   onQuickNote,
   onVoiceQuickNote,
-  onAddStudent,
   onQuickIdea,
   onQuickPersonalNote,
   voiceNotesEnabled = true,
@@ -54,11 +52,6 @@ export const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({
     } else {
       onQuickNote();
     }
-  };
-
-  const handleAddStudent = () => {
-    setIsOpen(false);
-    onAddStudent();
   };
 
   const handleQuickIdea = () => {
@@ -103,18 +96,6 @@ export const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({
               <span className="text-xs font-semibold">Hızlı Fikir</span>
               <div className="w-8 h-8 rounded-full bg-white/20 text-white flex items-center justify-center">
                 <Lightbulb className="w-4 h-4" />
-              </div>
-            </button>
-          )}
-
-          {showSchool && (
-            <button
-              onClick={handleAddStudent}
-              className="flex items-center gap-2.5 px-4 py-2.5 rounded-full bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 shadow-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-750 active:scale-95 transition text-sm font-medium touch-manipulation"
-            >
-              <span className="text-xs font-medium">Yeni Öğrenci</span>
-              <div className="w-8 h-8 rounded-full bg-teal-100 dark:bg-teal-950/80 text-teal-700 dark:text-teal-300 flex items-center justify-center">
-                <UserPlus className="w-4 h-4" />
               </div>
             </button>
           )}

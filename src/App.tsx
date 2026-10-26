@@ -2113,7 +2113,6 @@ export default function App() {
         <FloatingActionButton
           onQuickNote={() => handleOpenQuickNote()}
           onVoiceQuickNote={() => handleOpenVoiceQuickNote()}
-          onAddStudent={handleOpenAddStudent}
           onQuickIdea={() => setIsGlobalQuickIdeaOpen(true)}
           onQuickPersonalNote={() => setIsGlobalQuickNoteOpen(true)}
           voiceNotesEnabled={voiceNotesEnabled}
