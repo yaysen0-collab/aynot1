@@ -24,10 +24,10 @@
 
 ## Kurulum
 
-Gereksinim: Node.js 20 veya üzeri (ya da Bun).
+Gereksinim: Node.js 20 veya üzeri. Paket yöneticisi npm'dir (`package-lock.json`).
 
 ```bash
-npm install        # veya: bun install
+npm install
 npm run dev        # http://localhost:3000
 ```
 
