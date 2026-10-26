@@ -2108,15 +2108,18 @@ export default function App() {
       </main>
       </div>
 
-      {/* Floating Action Button for Quick Actions */}
-      <FloatingActionButton
-        onQuickNote={() => handleOpenQuickNote()}
-        onVoiceQuickNote={() => handleOpenVoiceQuickNote()}
-        onAddStudent={handleOpenAddStudent}
-        onQuickIdea={() => setIsGlobalQuickIdeaOpen(true)}
-        onQuickPersonalNote={() => setIsGlobalQuickNoteOpen(true)}
-        voiceNotesEnabled={voiceNotesEnabled}
-      />
+      {/* Floating Action Button for Quick Actions (Ayarlar'da gösterilmez) */}
+      {activeTab !== 'ayarlar' && (
+        <FloatingActionButton
+          onQuickNote={() => handleOpenQuickNote()}
+          onVoiceQuickNote={() => handleOpenVoiceQuickNote()}
+          onAddStudent={handleOpenAddStudent}
+          onQuickIdea={() => setIsGlobalQuickIdeaOpen(true)}
+          onQuickPersonalNote={() => setIsGlobalQuickNoteOpen(true)}
+          voiceNotesEnabled={voiceNotesEnabled}
+          moduleSettings={moduleSettings}
+        />
+      )}
 
       {/* Fixed Bottom Navigation (Mobile only) */}
       <BottomNav

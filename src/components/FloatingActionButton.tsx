@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Plus, Edit3, UserPlus, Mic, Lightbulb, StickyNote } from 'lucide-react';
+import type { ModuleSettings } from './BottomNav';
 
 interface FloatingActionButtonProps {
   onQuickNote: () => void;
@@ -8,6 +9,7 @@ interface FloatingActionButtonProps {
   onQuickIdea?: () => void;
   onQuickPersonalNote?: () => void;
   voiceNotesEnabled?: boolean;
+  moduleSettings?: ModuleSettings;
 }
 
 export const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({
@@ -17,8 +19,19 @@ export const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({
   onQuickIdea,
   onQuickPersonalNote,
   voiceNotesEnabled = true,
+  moduleSettings,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
+
+  // Kapalı modüllerin seçenekleri menüde görünmez (Ayarlar → Modüller)
+  const showSchool = moduleSettings?.showSchool ?? true;
+  const showNotes = moduleSettings?.showNotes ?? true;
+
+  // Gösterilecek hiç seçenek yoksa düğme de çizilmez
+  const hasNotesActions = showNotes && (onQuickPersonalNote || onQuickIdea);
+  if (!showSchool && !hasNotesActions) {
+    return null;
+  }
 
   const handleQuickNote = () => {
     setIsOpen(false);
@@ -69,7 +82,7 @@ export const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({
       {isOpen && (
         <div className="flex flex-col items-end gap-2.5 mb-3 z-40 transition-all animate-in fade-in slide-in-from-bottom-3 duration-200 pointer-events-auto">
           {/* Hızlı Not (Kişisel Not) Butonu */}
-          {onQuickPersonalNote && (
+          {showNotes && onQuickPersonalNote && (
             <button
               onClick={handleQuickPersonalNote}
               className="flex items-center gap-2.5 px-4 py-2.5 rounded-full bg-purple-600 hover:bg-purple-700 text-white shadow-lg active:scale-95 transition text-sm font-semibold touch-manipulation"
@@ -82,7 +95,7 @@ export const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({
           )}
 
           {/* Hızlı Fikir Ekleme Butonu */}
-          {onQuickIdea && (
+          {showNotes && onQuickIdea && (
             <button
               onClick={handleQuickIdea}
               className="flex items-center gap-2.5 px-4 py-2.5 rounded-full bg-amber-500 hover:bg-amber-600 text-white shadow-lg active:scale-95 transition text-sm font-semibold touch-manipulation"
@@ -94,18 +107,20 @@ export const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({
             </button>
           )}
 
-          <button
-            onClick={handleAddStudent}
-            className="flex items-center gap-2.5 px-4 py-2.5 rounded-full bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 shadow-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-750 active:scale-95 transition text-sm font-medium touch-manipulation"
-          >
-            <span className="text-xs font-medium">Yeni Öğrenci</span>
-            <div className="w-8 h-8 rounded-full bg-teal-100 dark:bg-teal-950/80 text-teal-700 dark:text-teal-300 flex items-center justify-center">
-              <UserPlus className="w-4 h-4" />
-            </div>
-          </button>
+          {showSchool && (
+            <button
+              onClick={handleAddStudent}
+              className="flex items-center gap-2.5 px-4 py-2.5 rounded-full bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 shadow-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-750 active:scale-95 transition text-sm font-medium touch-manipulation"
+            >
+              <span className="text-xs font-medium">Yeni Öğrenci</span>
+              <div className="w-8 h-8 rounded-full bg-teal-100 dark:bg-teal-950/80 text-teal-700 dark:text-teal-300 flex items-center justify-center">
+                <UserPlus className="w-4 h-4" />
+              </div>
+            </button>
+          )}
 
           {/* Sesle Hızlı Not Butonu */}
-          {voiceNotesEnabled && (
+          {showSchool && voiceNotesEnabled && (
             <button
               onClick={handleVoiceNote}
               className="flex items-center gap-2.5 px-4 py-2.5 rounded-full bg-rose-600 hover:bg-rose-700 text-white shadow-lg active:scale-95 transition text-sm font-semibold touch-manipulation"
@@ -117,15 +132,17 @@ export const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({
             </button>
           )}
 
-          <button
-            onClick={handleQuickNote}
-            className="flex items-center gap-2.5 px-4 py-2.5 rounded-full bg-teal-600 hover:bg-teal-700 text-white shadow-lg active:scale-95 transition text-sm font-medium touch-manipulation"
-          >
-            <span className="text-xs font-semibold">Okul Notu</span>
-            <div className="w-8 h-8 rounded-full bg-white/20 text-white flex items-center justify-center">
-              <Edit3 className="w-4 h-4" />
-            </div>
-          </button>
+          {showSchool && (
+            <button
+              onClick={handleQuickNote}
+              className="flex items-center gap-2.5 px-4 py-2.5 rounded-full bg-teal-600 hover:bg-teal-700 text-white shadow-lg active:scale-95 transition text-sm font-medium touch-manipulation"
+            >
+              <span className="text-xs font-semibold">Okul Notu</span>
+              <div className="w-8 h-8 rounded-full bg-white/20 text-white flex items-center justify-center">
+                <Edit3 className="w-4 h-4" />
+              </div>
+            </button>
+          )}
         </div>
       )}
 
