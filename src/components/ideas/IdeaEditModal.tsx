@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { ProjectIdea, IdeaStatus, IdeaType, IdeaLink } from '../../types';
 import { IDEA_STATUS_LIST, IDEA_TYPE_MAP } from '../../utils/ideaUtils';
+import { ModalShell } from '../common/ModalShell';
 
 interface IdeaEditModalProps {
   isOpen: boolean;
@@ -162,11 +163,7 @@ export const IdeaEditModal: React.FC<IdeaEditModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
-      <div 
-        className="w-full max-w-2xl max-h-[92vh] flex flex-col bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden animate-in zoom-in-95 duration-200"
-        onClick={(e) => e.stopPropagation()}
-      >
+    <ModalShell onClose={onClose} maxWidthClass="max-w-2xl">
         {/* Header */}
         <div className="p-4 sm:p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between flex-shrink-0">
           <div className="flex items-center gap-2.5">
@@ -528,7 +525,6 @@ export const IdeaEditModal: React.FC<IdeaEditModalProps> = ({
             <span>{saving ? 'Kaydediliyor...' : ideaToEdit ? 'Değişiklikleri Kaydet' : 'Fikri Kaydet'}</span>
           </button>
         </div>
-      </div>
-    </div>
+    </ModalShell>
   );
 };
