@@ -30,8 +30,7 @@ import {
   Download,
   Lightbulb,
   Rocket,
-  Star,
-  StickyNote
+  Star
 } from 'lucide-react';
 import { 
   Student, 
@@ -48,8 +47,7 @@ import {
   UniversityCourse,
   UniversityExam,
   ExamResultStatus,
-  ProjectIdea,
-  PersonalNote
+  ProjectIdea
 } from '../../types';
 import { getCategoryMeta } from '../../utils/categories';
 import { isCardDueToday } from '../../utils/englishUtils';
@@ -92,9 +90,7 @@ interface TodayViewProps {
   onNavigateToEnglish?: () => void;
   onNavigateToUniversity?: () => void;
   onNavigateToIdeas?: (ideaId?: string) => void;
-  onNavigateToNotes?: () => void;
   userName?: string;
-  personalNotes?: PersonalNote[];
   onOpenAddStudyTask: (defaultTitle?: string) => void;
   onToggleTaskComplete: (taskId: string, completed: boolean) => Promise<void>;
   onStartPomodoro: (task: StudyTask) => void;
@@ -128,7 +124,6 @@ export const TodayView: React.FC<TodayViewProps> = ({
     showNotes: true,
   },
   userName = 'Zipidola',
-  personalNotes = [],
   onNavigateToStudents,
   onSelectStudent,
   onOpenQuickNote,
@@ -138,7 +133,6 @@ export const TodayView: React.FC<TodayViewProps> = ({
   onNavigateToEnglish,
   onNavigateToUniversity,
   onNavigateToIdeas,
-  onNavigateToNotes,
   onOpenAddStudyTask,
   onToggleTaskComplete,
   onStartPomodoro,
@@ -191,13 +185,6 @@ export const TodayView: React.FC<TodayViewProps> = ({
     greeting = 'İyi geceler';
   }
 
-  // Summary counts for counters
-  const totalWords = englishCards.length;
-  const learnedWords = englishCards.filter((c) => (c.intervalDays || 0) >= 21).length;
-  const totalAllNotes = (studentNotes?.length || 0) + (personalNotes?.length || 0);
-  const totalActiveIdeas = (projectIdeas || []).filter(
-    (i) => i.status !== 'rafa_kaldirildi' && !(i as any).isArchived
-  ).length;
 
   const dailyQuote = getDailyQuote(currentTime);
 
@@ -294,75 +281,6 @@ export const TodayView: React.FC<TodayViewProps> = ({
                 )}
               </div>
             </div>
-          </div>
-
-          {/* SAYAÇ KARTLARI: Yan yana üç küçük kart (Kelime, Not, Fikir) - Yalnızca Açık Sekmelere Göre */}
-          <div className="flex gap-2 sm:gap-2.5 mt-4">
-            {/* 1. Kelime */}
-            {moduleSettings.showEnglish && (
-              <button
-                type="button"
-                onClick={onNavigateToEnglish}
-                className="flex-1 min-w-0 bg-white/10 hover:bg-white/15 backdrop-blur-sm rounded-2xl p-2.5 sm:p-3 text-left transition active:scale-95 border border-white/10 flex flex-col justify-between"
-              >
-                <div className="flex items-center gap-1.5 text-teal-200 text-xs font-semibold mb-1">
-                  <Languages className="w-3.5 h-3.5 text-teal-300" />
-                  <span className="truncate">Kelime</span>
-                </div>
-                <div className="text-base sm:text-lg font-bold text-white leading-tight">
-                  {totalWords}
-                </div>
-                <div className="text-[10px] sm:text-[11px] text-teal-100/80 mt-0.5 font-medium leading-tight truncate" title={`${totalWords} kelime, ${learnedWords} öğrenildi`}>
-                  {totalWords > 0 ? `${learnedWords} öğrenildi` : '0 öğrenildi'}
-                </div>
-              </button>
-            )}
-
-            {/* 2. Not */}
-            {moduleSettings.showNotes && (
-              <button
-                type="button"
-                onClick={onNavigateToNotes}
-                className="flex-1 min-w-0 bg-white/10 hover:bg-white/15 backdrop-blur-sm rounded-2xl p-2.5 sm:p-3 text-left transition active:scale-95 border border-white/10 flex flex-col justify-between"
-              >
-                <div className="flex items-center gap-1.5 text-teal-200 text-xs font-semibold mb-1">
-                  <StickyNote className="w-3.5 h-3.5 text-teal-300" />
-                  <span className="truncate">Not</span>
-                </div>
-                <div className="text-base sm:text-lg font-bold text-white leading-tight">
-                  {totalAllNotes}
-                </div>
-                <div className="text-[10px] sm:text-[11px] text-teal-100/80 mt-0.5 font-medium leading-tight truncate">
-                  Okul & Genel
-                </div>
-              </button>
-            )}
-
-            {/* 3. Fikir */}
-            {moduleSettings.showNotes && (
-              <button
-                type="button"
-                onClick={() => {
-                  if (onNavigateToIdeas) {
-                    onNavigateToIdeas();
-                  } else if (onNavigateToNotes) {
-                    onNavigateToNotes();
-                  }
-                }}
-                className="flex-1 min-w-0 bg-white/10 hover:bg-white/15 backdrop-blur-sm rounded-2xl p-2.5 sm:p-3 text-left transition active:scale-95 border border-white/10 flex flex-col justify-between"
-              >
-                <div className="flex items-center gap-1.5 text-teal-200 text-xs font-semibold mb-1">
-                  <Lightbulb className="w-3.5 h-3.5 text-amber-300" />
-                  <span className="truncate">Fikir</span>
-                </div>
-                <div className="text-base sm:text-lg font-bold text-white leading-tight">
-                  {totalActiveIdeas}
-                </div>
-                <div className="text-[10px] sm:text-[11px] text-teal-100/80 mt-0.5 font-medium leading-tight truncate">
-                  Aktif fikir
-                </div>
-              </button>
-            )}
           </div>
         </div>
       </div>

@@ -1902,7 +1902,6 @@ export default function App() {
                 universityExams={universityExams}
                 projectIdeas={projectIdeas}
                 userName={userName}
-                personalNotes={personalNotes}
                 moduleSettings={moduleSettings}
                 onNavigateToStudents={() => {
                   setSelectedStudentId(null);
@@ -1925,10 +1924,6 @@ export default function App() {
                   setActiveTab('calisma');
                 }}
                 onNavigateToEnglish={() => setActiveTab('ingilizce')}
-                onNavigateToNotes={() => {
-                  setNotesSubTab('notlar');
-                  setActiveTab('notlar');
-                }}
                 onNavigateToUniversity={() => {
                   setStudySubTab('sinavlar');
                   setActiveTab('calisma');
