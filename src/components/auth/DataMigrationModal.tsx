@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { CloudUpload, CheckCircle2, AlertCircle, ArrowRight, ShieldCheck, Database } from 'lucide-react';
 import { LocalDataSummary, migrateLocalDataToCloud } from '../../services/migrationService';
+import { ModalShell } from '../common/ModalShell';
 
 interface DataMigrationModalProps {
   uid: string;
@@ -48,8 +49,8 @@ export const DataMigrationModal: React.FC<DataMigrationModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 sm:p-7 w-full max-w-lg shadow-2xl space-y-5">
+    <ModalShell onClose={onClose} dismissible={false}>
+      <div className="overflow-y-auto p-6 sm:p-7 space-y-5">
         {/* Header */}
         <div className="flex items-start gap-4">
           <div className="w-12 h-12 rounded-2xl bg-sky-50 dark:bg-sky-950/50 border border-sky-100 dark:border-sky-900/40 flex items-center justify-center shrink-0 text-sky-600 dark:text-sky-400">
@@ -208,6 +209,6 @@ export const DataMigrationModal: React.FC<DataMigrationModalProps> = ({
           </button>
         </div>
       </div>
-    </div>
+    </ModalShell>
   );
 };

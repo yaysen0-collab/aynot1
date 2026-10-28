@@ -9,12 +9,15 @@ interface ModalShellProps {
   children: React.ReactNode;
   /** Geniş ekrandaki en fazla genişlik (Tailwind sınıfı) */
   maxWidthClass?: string;
+  /** false: arka plana dokunmak ve Esc kapatmaz (yanlışlıkla kapanmaması gereken pencereler) */
+  dismissible?: boolean;
 }
 
 export const ModalShell: React.FC<ModalShellProps> = ({
   onClose,
   children,
   maxWidthClass = 'max-w-lg',
+  dismissible = true,
 }) => {
   const [viewport, setViewport] = useState<{ height: number; top: number } | null>(null);
 
@@ -48,12 +51,13 @@ export const ModalShell: React.FC<ModalShellProps> = ({
 
   // Esc tuşu kapatır (bilgisayarda)
   useEffect(() => {
+    if (!dismissible) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [onClose]);
+  }, [onClose, dismissible]);
 
   return (
     <div
@@ -64,7 +68,7 @@ export const ModalShell: React.FC<ModalShellProps> = ({
       }}
       // Sadece koyu arka plana dokunulursa kapanır, pencerenin içine dokunmak kapatmaz
       onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
+        if (dismissible && e.target === e.currentTarget) onClose();
       }}
     >
       <div

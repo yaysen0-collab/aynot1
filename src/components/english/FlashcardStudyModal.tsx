@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { EnglishCard, EnglishDeck, SpacedRepetitionRating } from '../../types';
 import { speakEnglish } from '../../utils/englishUtils';
+import { ModalShell } from '../common/ModalShell';
 
 interface FlashcardStudyModalProps {
   isOpen: boolean;
@@ -147,11 +148,7 @@ export const FlashcardStudyModal: React.FC<FlashcardStudyModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
-      <div 
-        className="w-full max-w-xl bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200/90 dark:border-slate-800 overflow-hidden flex flex-col max-h-[92vh] animate-in zoom-in-95 duration-200"
-        onClick={(e) => e.stopPropagation()}
-      >
+    <ModalShell onClose={onClose} maxWidthClass="max-w-xl" dismissible={false}>
         {/* Header */}
         <div className="p-4 sm:p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/60 dark:bg-slate-900/60">
           <div className="flex items-center gap-2.5">
@@ -441,7 +438,6 @@ export const FlashcardStudyModal: React.FC<FlashcardStudyModalProps> = ({
             </div>
           )}
         </div>
-      </div>
-    </div>
+    </ModalShell>
   );
 };
