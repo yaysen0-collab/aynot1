@@ -8,7 +8,6 @@ import {
   FileText, 
   Sparkles, 
   ArrowRight,
-  Plus,
   CheckCircle2,
   Clock,
   AlertCircle,
@@ -433,8 +432,8 @@ export const TodayView: React.FC<TodayViewProps> = ({
           </div>
         )}
 
-        {/* CARD 2: BUGÜNÜN ÇALIŞMA & DERS GÖREVLERİ KARTI */}
-        {moduleSettings.showStudy && (
+        {/* CARD 2: BUGÜNÜN ÇALIŞMA & DERS GÖREVLERİ KARTI (sadece bugün görev varsa) */}
+        {moduleSettings.showStudy && todayTasks.length > 0 && (
           <div className="rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 p-5 shadow-sm space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2.5">
@@ -451,9 +450,7 @@ export const TodayView: React.FC<TodayViewProps> = ({
                     </span>
                   </div>
                   <p className="text-xs text-slate-500 dark:text-slate-400">
-                    {todayTasks.length === 0
-                      ? 'Bugün için planlanan görev yok'
-                      : `${todayTasks.length} görevden ${completedStudyCount} tanesi tamamlandı`}
+                    {todayTasks.length} görevden {completedStudyCount} tanesi tamamlandı
                   </p>
                 </div>
               </div>
@@ -467,35 +464,21 @@ export const TodayView: React.FC<TodayViewProps> = ({
               </button>
             </div>
 
-            {/* Progress Bar if tasks exist */}
-            {todayTasks.length > 0 && (
-              <div className="p-3 rounded-2xl bg-slate-50/80 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800 space-y-1.5">
-                <div className="flex items-center justify-between text-xs font-medium text-slate-600 dark:text-slate-300">
-                  <span>{completedStudyCount} tamamlandı / {incompleteTasks.length} bekliyor</span>
-                  <span className="font-bold text-indigo-600 dark:text-indigo-400">%{studyProgressPct}</span>
-                </div>
-                <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2 overflow-hidden">
-                  <div
-                    className="bg-indigo-600 h-2 rounded-full transition-all duration-300"
-                    style={{ width: `${studyProgressPct}%` }}
-                  />
-                </div>
+            {/* Progress Bar */}
+            <div className="p-3 rounded-2xl bg-slate-50/80 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800 space-y-1.5">
+              <div className="flex items-center justify-between text-xs font-medium text-slate-600 dark:text-slate-300">
+                <span>{completedStudyCount} tamamlandı / {incompleteTasks.length} bekliyor</span>
+                <span className="font-bold text-indigo-600 dark:text-indigo-400">%{studyProgressPct}</span>
               </div>
-            )}
+              <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2 overflow-hidden">
+                <div
+                  className="bg-indigo-600 h-2 rounded-full transition-all duration-300"
+                  style={{ width: `${studyProgressPct}%` }}
+                />
+              </div>
+            </div>
 
             {/* Task List items */}
-            {todayTasks.length === 0 ? (
-              <div className="p-4 rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 text-center">
-                <p className="text-xs text-slate-400">Bugün için eklenmiş bir çalışma görevi bulunmuyor.</p>
-                <button
-                  onClick={() => onOpenAddStudyTask()}
-                  className="mt-2 text-xs text-indigo-600 dark:text-indigo-400 font-semibold hover:underline inline-flex items-center gap-1"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                  <span>Yeni görev ekle</span>
-                </button>
-              </div>
-            ) : (
               <div className="space-y-2">
                 {todayTasks.map((task) => {
                   const meta = getStudyTypeMeta(task.type);
@@ -565,7 +548,6 @@ export const TodayView: React.FC<TodayViewProps> = ({
                   );
                 })}
               </div>
-            )}
 
             {/* Gün sonunda yapılmayan görevler için aksiyon paneli (Otomatik kaydırmaz, onay ister) */}
             {incompleteTasks.length > 0 && (
