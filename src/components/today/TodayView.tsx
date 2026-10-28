@@ -51,6 +51,7 @@ import { getStudyTypeMeta, formatDuration } from '../../utils/studyUtils';
 import { getExamCountdown, getExamTypeTitle, generateExamIcsFile } from '../../utils/universityUtils';
 import { ExamResultModal } from '../university/ExamResultModal';
 import { getDailyQuote } from '../../utils/quotes';
+import { ModalShell } from '../common/ModalShell';
 
 // "Bugün nasıl?" kartındaki üç seçenek; seçilince düğme kendi rengini alır
 const ENERGY_OPTIONS: { rating: DayEnergyRating; emoji: string; label: string; selectedClass: string }[] = [
@@ -987,11 +988,7 @@ export const TodayView: React.FC<TodayViewProps> = ({
 
       {/* YORGUNLUK MODU ÖNERİLER MODALİ (Nazik ve suçlayıcı olmayan öneriler) */}
       {showFatigueModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
-          <div 
-            className="w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-amber-200 dark:border-amber-800 overflow-hidden flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-200"
-            onClick={(e) => e.stopPropagation()}
-          >
+        <ModalShell onClose={() => setShowFatigueModal(false)} maxWidthClass="max-w-md">
             {/* Header */}
             <div className="p-4 sm:p-5 border-b border-amber-100 dark:border-amber-900/50 bg-amber-50/70 dark:bg-amber-950/40 flex items-center justify-between">
               <div className="flex items-center gap-2.5">
@@ -1087,8 +1084,7 @@ export const TodayView: React.FC<TodayViewProps> = ({
                 Planı Olduğu Gibi Bırak
               </button>
             </div>
-          </div>
-        </div>
+        </ModalShell>
       )}
 
       {/* Sınav Sonucu Soru Modalı */}
