@@ -618,9 +618,12 @@ export const TodayView: React.FC<TodayViewProps> = ({
           </div>
         )}
 
-        {/* Card 2.5: İNGİLİZCE KELİME KARTLARI & GÜNLÜK HEDEF KARTI */}
+        {/* Card 2.5: İNGİLİZCE KELİME KARTLARI & GÜNLÜK HEDEF KARTI (sadece tekrar bekleyen kart varsa) */}
         {moduleSettings.showEnglish && (() => {
           const dueEnglishCards = englishCards.filter((c) => isCardDueToday(c, todayStr));
+          if (dueEnglishCards.length === 0) {
+            return null;
+          }
           const todayLearned = englishCards.filter((c) => c.learnedDate === todayStr).length;
           const targetGoal = (isTiring && englishSettings?.reduceGoalOnFatigue)
             ? Math.max(1, Math.round((englishSettings?.dailyNewWordGoal || 5) / 2))
@@ -678,16 +681,8 @@ export const TodayView: React.FC<TodayViewProps> = ({
 
               {/* Quick Actions / Status */}
               <div className="flex items-center justify-between pt-1">
-                <div className="text-xs text-slate-500 dark:text-slate-400">
-                  {dueEnglishCards.length > 0 ? (
-                    <span className="text-amber-600 dark:text-amber-400 font-semibold">
-                      🔔 Bugün tekrar edilecek {dueEnglishCards.length} kelime kartı var.
-                    </span>
-                  ) : (
-                    <span className="text-emerald-600 dark:text-emerald-400 font-medium">
-                      ✓ Bugünün tüm tekrarları güncel.
-                    </span>
-                  )}
+                <div className="text-xs text-amber-600 dark:text-amber-400 font-semibold">
+                  🔔 Bugün tekrar edilecek {dueEnglishCards.length} kelime kartı var.
                 </div>
 
                 {onNavigateToEnglish && (
@@ -695,7 +690,7 @@ export const TodayView: React.FC<TodayViewProps> = ({
                     onClick={onNavigateToEnglish}
                     className="px-3.5 py-1.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white text-xs font-semibold shadow-xs active:scale-95 transition"
                   >
-                    {dueEnglishCards.length > 0 ? 'Tekrarı Başlat' : 'Kelime Ekle'}
+                    Tekrarı Başlat
                   </button>
                 )}
               </div>
