@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { X, Lightbulb, Mic, MicOff, Sparkles, ArrowRight } from 'lucide-react';
 import { ProjectIdea, IdeaType } from '../../types';
 import { IDEA_TYPE_MAP } from '../../utils/ideaUtils';
+import { ModalShell } from '../common/ModalShell';
 
 interface QuickIdeaModalProps {
   isOpen: boolean;
@@ -118,11 +119,7 @@ export const QuickIdeaModal: React.FC<QuickIdeaModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
-      <div 
-        className="w-full max-w-lg bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden animate-in zoom-in-95 duration-200"
-        onClick={(e) => e.stopPropagation()}
-      >
+    <ModalShell onClose={onClose}>
         {/* Header */}
         <div className="p-4 sm:p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
@@ -147,8 +144,8 @@ export const QuickIdeaModal: React.FC<QuickIdeaModalProps> = ({
           </button>
         </div>
 
-        {/* Form Body */}
-        <div className="p-4 sm:p-5 space-y-4 text-xs">
+        {/* Form Body (sığmazsa kendi içinde kayar; başlık ve düğmeler sabit kalır) */}
+        <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4 text-xs">
           {/* Fikir Başlığı */}
           <div>
             <div className="flex items-center justify-between mb-1.5">
@@ -294,7 +291,6 @@ export const QuickIdeaModal: React.FC<QuickIdeaModalProps> = ({
             </button>
           </div>
         </div>
-      </div>
-    </div>
+    </ModalShell>
   );
 };
