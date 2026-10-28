@@ -1913,7 +1913,6 @@ export default function App() {
                   setSchoolSubTab('ogrenciler');
                   setActiveTab('ogrenciler');
                 }}
-                onOpenQuickNote={() => handleOpenQuickNote()}
                 onAddStudent={handleOpenAddStudent}
                 onOpenParentCalls={() => {
                   setSchoolSubTab('veli_aramalari');

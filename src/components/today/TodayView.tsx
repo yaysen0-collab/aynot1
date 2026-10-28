@@ -83,7 +83,6 @@ interface TodayViewProps {
   moduleSettings?: ModuleSettings;
   onNavigateToStudents: () => void;
   onSelectStudent: (studentId: string) => void;
-  onOpenQuickNote: () => void;
   onAddStudent: () => void;
   onOpenParentCalls: () => void;
   onNavigateToStudy: (subTab?: 'plan' | 'dersler' | 'sinavlar' | 'notlar') => void;
@@ -126,7 +125,6 @@ export const TodayView: React.FC<TodayViewProps> = ({
   userName = 'Zipidola',
   onNavigateToStudents,
   onSelectStudent,
-  onOpenQuickNote,
   onAddStudent,
   onOpenParentCalls,
   onNavigateToStudy,
@@ -284,19 +282,6 @@ export const TodayView: React.FC<TodayViewProps> = ({
           </div>
         </div>
       </div>
-
-      {/* Quick Action Bar for Classroom */}
-      {(moduleSettings.showSchool || moduleSettings.showNotes) && (
-        <div>
-          <button
-            onClick={onOpenQuickNote}
-            className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-2xl bg-teal-600 hover:bg-teal-700 active:scale-98 text-white font-medium text-sm shadow-sm transition"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Hızlı Not Ekle</span>
-          </button>
-        </div>
-      )}
 
       {/* Main Responsive Grid for Cards on Wide Screens */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
