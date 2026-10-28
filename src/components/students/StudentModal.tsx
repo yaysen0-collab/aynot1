@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, User, Calendar, BookOpen, Phone, AlertTriangle, Heart } from 'lucide-react';
 import { Student } from '../../types';
+import { ModalShell } from '../common/ModalShell';
 
 interface StudentModalProps {
   isOpen: boolean;
@@ -75,11 +76,7 @@ export const StudentModal: React.FC<StudentModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
-      <div
-        className="w-full max-w-lg bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200/90 dark:border-slate-800 overflow-hidden flex flex-col max-h-[92vh] animate-in zoom-in-95 duration-200"
-        onClick={(e) => e.stopPropagation()}
-      >
+    <ModalShell onClose={onClose}>
         {/* Header */}
         <div className="p-4 sm:p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-900/50">
           <div className="flex items-center gap-2.5">
@@ -242,7 +239,6 @@ export const StudentModal: React.FC<StudentModalProps> = ({
             </button>
           </div>
         </form>
-      </div>
-    </div>
+    </ModalShell>
   );
 };
