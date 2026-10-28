@@ -223,9 +223,21 @@ export const TodayView: React.FC<TodayViewProps> = ({
   );
   const completedStudyCount = todayTasks.filter((t) => t.completed).length;
   const incompleteTasks = todayTasks.filter((t) => !t.completed);
-  const studyProgressPct = todayTasks.length > 0 
-    ? Math.round((completedStudyCount / todayTasks.length) * 100) 
+  const studyProgressPct = todayTasks.length > 0
+    ? Math.round((completedStudyCount / todayTasks.length) * 100)
     : 0;
+
+  // Bugün gösterilecek kart var mı? (yoksa "bekleyen iş yok" mesajı çıkar)
+  const hasDueEnglish = englishCards.some((c) => isCardDueToday(c, todayStr));
+  const hasExamsToShow = universityExams.some((e) => {
+    const cd = getExamCountdown(e, todayStr);
+    return !cd.isPast || cd.isResultPromptEligible;
+  });
+  const hasAnyTodayCard =
+    (moduleSettings.showSchool && showCallCard) ||
+    (moduleSettings.showStudy && todayTasks.length > 0) ||
+    (moduleSettings.showEnglish && hasDueEnglish) ||
+    (moduleSettings.showStudy && hasExamsToShow);
 
   // Day type config for today
   const currentDayConfig = studyDayConfigs.find((c) => c.dayOfWeek === currentDayIndex);
@@ -619,11 +631,8 @@ export const TodayView: React.FC<TodayViewProps> = ({
         )}
 
         {/* Card 2.5: İNGİLİZCE KELİME KARTLARI & GÜNLÜK HEDEF KARTI (sadece tekrar bekleyen kart varsa) */}
-        {moduleSettings.showEnglish && (() => {
+        {moduleSettings.showEnglish && hasDueEnglish && (() => {
           const dueEnglishCards = englishCards.filter((c) => isCardDueToday(c, todayStr));
-          if (dueEnglishCards.length === 0) {
-            return null;
-          }
           const todayLearned = englishCards.filter((c) => c.learnedDate === todayStr).length;
           const targetGoal = (isTiring && englishSettings?.reduceGoalOnFatigue)
             ? Math.max(1, Math.round((englishSettings?.dailyNewWordGoal || 5) / 2))
@@ -962,6 +971,19 @@ export const TodayView: React.FC<TodayViewProps> = ({
           );
         })()}
       </div>
+
+      {/* Hiç kart yoksa: ekran boş görünmesin */}
+      {!hasAnyTodayCard && (
+        <div className="rounded-3xl border border-dashed border-slate-200 dark:border-slate-800 px-5 py-8 text-center">
+          <div className="text-3xl">🎉</div>
+          <p className="mt-2 text-sm font-semibold text-slate-700 dark:text-slate-200">
+            Bugün bekleyen iş yok
+          </p>
+          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+            Görevler, sınavlar, veli aramaları ve kelime tekrarları burada görünür.
+          </p>
+        </div>
+      )}
 
       {/* YORGUNLUK MODU ÖNERİLER MODALİ (Nazik ve suçlayıcı olmayan öneriler) */}
       {showFatigueModal && (
