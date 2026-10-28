@@ -52,6 +52,7 @@ import {
 } from '../../utils/universityUtils';
 
 import { toLocalISODate } from '../../utils/calendar';
+import { ModalShell } from '../common/ModalShell';
 export type StudySubTab = 'plan' | 'dersler' | 'sinavlar' | 'notlar';
 
 interface StudyContainerViewProps {
@@ -1090,11 +1091,7 @@ export const StudyContainerView: React.FC<StudyContainerViewProps> = ({
       {/* MODALS */}
       {/* 1. Single Course Modal */}
       {isCourseModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
-          <div 
-            className="w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200/90 dark:border-slate-800 overflow-hidden flex flex-col"
-            onClick={(e) => e.stopPropagation()}
-          >
+        <ModalShell onClose={() => setIsCourseModalOpen(false)} maxWidthClass="max-w-md">
             <div className="p-4 sm:p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/70 dark:bg-slate-800/40">
               <h3 className="text-base font-bold text-slate-800 dark:text-slate-100">
                 {courseToEdit ? 'Dersi Düzenle' : 'Yeni Ders Ekle'}
@@ -1107,7 +1104,7 @@ export const StudyContainerView: React.FC<StudyContainerViewProps> = ({
               </button>
             </div>
 
-            <form onSubmit={handleSaveSingleCourse} className="p-4 sm:p-5 space-y-3 text-xs">
+            <form onSubmit={handleSaveSingleCourse} className="overflow-y-auto p-4 sm:p-5 space-y-3 text-xs">
               <div>
                 <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
                   Ders Adı <span className="text-rose-500">*</span>
@@ -1167,17 +1164,12 @@ export const StudyContainerView: React.FC<StudyContainerViewProps> = ({
                 </button>
               </div>
             </form>
-          </div>
-        </div>
+        </ModalShell>
       )}
 
       {/* 2. New Term Modal */}
       {isTermModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
-          <div 
-            className="w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200/90 dark:border-slate-800 overflow-hidden flex flex-col"
-            onClick={(e) => e.stopPropagation()}
-          >
+        <ModalShell onClose={() => setIsTermModalOpen(false)} maxWidthClass="max-w-md">
             <div className="p-4 sm:p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/70 dark:bg-slate-800/40">
               <h3 className="text-base font-bold text-slate-800 dark:text-slate-100">
                 Yeni Dönem Ekle
@@ -1190,7 +1182,7 @@ export const StudyContainerView: React.FC<StudyContainerViewProps> = ({
               </button>
             </div>
 
-            <form onSubmit={handleCreateTerm} className="p-4 sm:p-5 space-y-3 text-xs">
+            <form onSubmit={handleCreateTerm} className="overflow-y-auto p-4 sm:p-5 space-y-3 text-xs">
               <div>
                 <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
                   Dönem Adı <span className="text-rose-500">*</span>
@@ -1222,8 +1214,7 @@ export const StudyContainerView: React.FC<StudyContainerViewProps> = ({
                 </button>
               </div>
             </form>
-          </div>
-        </div>
+        </ModalShell>
       )}
 
       {/* 3. Batch Course Modal */}

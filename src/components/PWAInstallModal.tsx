@@ -1,6 +1,7 @@
 import React from 'react';
 import { X, Smartphone, Share, PlusSquare, CheckCircle, Download } from 'lucide-react';
 import { usePWAInstall } from '../hooks/usePWAInstall';
+import { ModalShell } from './common/ModalShell';
 
 interface PWAInstallModalProps {
   isOpen: boolean;
@@ -13,14 +14,8 @@ export const PWAInstallModal: React.FC<PWAInstallModalProps> = ({ isOpen, onClos
   if (!isOpen) return null;
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200"
-      onClick={onClose}
-    >
-      <div
-        className="w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200/90 dark:border-slate-800 p-5 sm:p-6 overflow-hidden animate-in zoom-in-95 duration-200"
-        onClick={(e) => e.stopPropagation()}
-      >
+    <ModalShell onClose={onClose} maxWidthClass="max-w-md">
+      <div className="overflow-y-auto p-5 sm:p-6">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2.5">
             <div className="w-10 h-10 rounded-2xl bg-teal-100 dark:bg-teal-950/80 text-teal-700 dark:text-teal-300 flex items-center justify-center">
@@ -121,6 +116,6 @@ export const PWAInstallModal: React.FC<PWAInstallModalProps> = ({ isOpen, onClos
           </button>
         </div>
       </div>
-    </div>
+    </ModalShell>
   );
 };
