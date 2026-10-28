@@ -595,7 +595,7 @@ export const PersonalNoteModal: React.FC<PersonalNoteModalProps> = ({
             onChange={(e) => setContent(e.target.value)}
             onKeyDown={handleBodyKeyDown}
             placeholder="Not yazın..."
-            className={`w-full flex-1 bg-transparent border-0 outline-none focus:ring-0 resize-none overflow-hidden text-slate-800 dark:text-slate-100 placeholder:text-slate-300 dark:placeholder:text-slate-600 min-h-[55vh] pt-2 ${
+            className={`w-full shrink-0 bg-transparent border-0 outline-none focus:ring-0 resize-none overflow-hidden text-slate-800 dark:text-slate-100 placeholder:text-slate-300 dark:placeholder:text-slate-600 min-h-[55vh] pt-2 ${
               hasCodeTagSelected ? 'font-mono text-sm leading-6' : 'text-[17px] leading-[1.65]'
             }`}
           />
