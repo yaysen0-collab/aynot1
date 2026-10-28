@@ -1900,7 +1900,6 @@ export default function App() {
                 englishSettings={englishSettings}
                 universityCourses={universityCourses}
                 universityExams={universityExams}
-                projectIdeas={projectIdeas}
                 userName={userName}
                 moduleSettings={moduleSettings}
                 onNavigateToStudents={() => {
@@ -1926,11 +1925,6 @@ export default function App() {
                 onNavigateToUniversity={() => {
                   setStudySubTab('sinavlar');
                   setActiveTab('calisma');
-                }}
-                onNavigateToIdeas={(ideaId) => {
-                  if (ideaId) setSelectedIdeaIdForView(ideaId);
-                  setNotesSubTab('fikirler');
-                  setActiveTab('notlar');
                 }}
                 onOpenAddStudyTask={(defaultTitle) => handleOpenAddStudyTask(undefined, undefined)}
                 onToggleTaskComplete={handleToggleStudyTask}

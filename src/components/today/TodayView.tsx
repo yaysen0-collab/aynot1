@@ -26,10 +26,7 @@ import {
   ChevronUp,
   Languages,
   GraduationCap,
-  Download,
-  Lightbulb,
-  Rocket,
-  Star
+  Download
 } from 'lucide-react';
 import { 
   Student, 
@@ -45,8 +42,7 @@ import {
   EnglishDailyGoalSettings,
   UniversityCourse,
   UniversityExam,
-  ExamResultStatus,
-  ProjectIdea
+  ExamResultStatus
 } from '../../types';
 import { getCategoryMeta } from '../../utils/categories';
 import { isCardDueToday } from '../../utils/englishUtils';
@@ -100,7 +96,6 @@ interface TodayViewProps {
   englishSettings?: EnglishDailyGoalSettings;
   universityCourses?: UniversityCourse[];
   universityExams?: UniversityExam[];
-  projectIdeas?: ProjectIdea[];
   moduleSettings?: ModuleSettings;
   onNavigateToStudents: () => void;
   onSelectStudent: (studentId: string) => void;
@@ -109,7 +104,6 @@ interface TodayViewProps {
   onNavigateToStudy: (subTab?: 'plan' | 'dersler' | 'sinavlar' | 'notlar') => void;
   onNavigateToEnglish?: () => void;
   onNavigateToUniversity?: () => void;
-  onNavigateToIdeas?: (ideaId?: string) => void;
   userName?: string;
   onOpenAddStudyTask: (defaultTitle?: string) => void;
   onToggleTaskComplete: (taskId: string, completed: boolean) => Promise<void>;
@@ -136,7 +130,6 @@ export const TodayView: React.FC<TodayViewProps> = ({
   englishSettings,
   universityCourses = [],
   universityExams = [],
-  projectIdeas = [],
   moduleSettings = {
     showSchool: true,
     showStudy: true,
@@ -151,7 +144,6 @@ export const TodayView: React.FC<TodayViewProps> = ({
   onNavigateToStudy,
   onNavigateToEnglish,
   onNavigateToUniversity,
-  onNavigateToIdeas,
   onOpenAddStudyTask,
   onToggleTaskComplete,
   onStartPomodoro,
@@ -987,161 +979,6 @@ export const TodayView: React.FC<TodayViewProps> = ({
                   </div>
                 );
               })()}
-            </div>
-          );
-        })()}
-
-        {/* FİKİRLER KARTI (Yapılıyor projeler ve son güncellenen fikirler birleşik) */}
-        {moduleSettings.showNotes && (() => {
-          const getStatusMeta = (status: string) => {
-            switch (status) {
-              case 'yapiliyor':
-                return { label: 'Yapılıyor', bg: 'bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 border-amber-300 dark:border-amber-800' };
-              case 'fikir':
-                return { label: 'Fikir', bg: 'bg-blue-100 dark:bg-blue-950 text-blue-800 dark:text-blue-300 border-blue-300 dark:border-blue-800' };
-              case 'arastirma':
-                return { label: 'Araştırma', bg: 'bg-purple-100 dark:bg-purple-950 text-purple-800 dark:text-purple-300 border-purple-300 dark:border-purple-800' };
-              case 'yayinda':
-                return { label: 'Yayında', bg: 'bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800' };
-              default:
-                return { label: 'Fikir', bg: 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-700' };
-            }
-          };
-
-          const inProgressIdeas = projectIdeas.filter((i) => i.status === 'yapiliyor');
-          const otherIdeas = projectIdeas
-            .filter((i) => i.status !== 'yapiliyor' && i.status !== 'rafa_kaldirildi')
-            .sort((a, b) => {
-              if (a.isStarred !== b.isStarred) return a.isStarred ? -1 : 1;
-              return b.updatedAt - a.updatedAt;
-            });
-
-          const displayedInProgress = inProgressIdeas.slice(0, 3);
-          const remainingSlots = Math.max(0, 3 - displayedInProgress.length);
-          const displayedOther = otherIdeas.slice(0, remainingSlots);
-          const hasAnyIdeas = projectIdeas.length > 0;
-
-          return (
-            <div className="rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 p-5 shadow-sm space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-9 h-9 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center">
-                    <Lightbulb className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100">
-                      Fikirler
-                    </h3>
-                    <p className="text-xs text-slate-500 dark:text-slate-400">
-                      Geliştirme projeleri ve fikir havuzu
-                    </p>
-                  </div>
-                </div>
-                {hasAnyIdeas && onNavigateToIdeas && (
-                  <button
-                    type="button"
-                    onClick={() => onNavigateToIdeas()}
-                    className="text-xs text-amber-600 dark:text-amber-400 hover:underline font-medium flex items-center gap-1"
-                  >
-                    <span>Tümü</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </button>
-                )}
-              </div>
-
-              {!hasAnyIdeas ? (
-                <div className="rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 p-6 text-center text-slate-400 dark:text-slate-500">
-                  <p className="text-xs">Henüz eklenmiş fikir veya proje yok.</p>
-                  {onNavigateToIdeas && (
-                    <button
-                      type="button"
-                      onClick={() => onNavigateToIdeas()}
-                      className="mt-2 text-xs text-amber-600 dark:text-amber-400 font-medium hover:underline"
-                    >
-                      İlk fikrini ekle →
-                    </button>
-                  )}
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  {/* 1. Önce Yapılıyor Durumundaki Projeler */}
-                  {displayedInProgress.map((idea) => {
-                    const totalTodos = idea.todos?.length || 0;
-                    const completedTodos = idea.todos?.filter((t) => t.completed).length || 0;
-                    const percent = totalTodos > 0 ? Math.round((completedTodos / totalTodos) * 100) : null;
-                    const meta = getStatusMeta(idea.status);
-
-                    return (
-                      <button
-                        key={idea.id}
-                        type="button"
-                        onClick={() => onNavigateToIdeas && onNavigateToIdeas(idea.id)}
-                        className="w-full text-left p-3 rounded-2xl bg-amber-50/60 hover:bg-amber-100/50 dark:bg-amber-950/20 dark:hover:bg-amber-950/40 border border-amber-200/70 dark:border-amber-900/40 transition group space-y-1.5"
-                      >
-                        <div className="flex items-center justify-between gap-2">
-                          <div className="flex items-center gap-1.5 min-w-0">
-                            <span className="text-xs font-bold text-slate-900 dark:text-white truncate group-hover:text-amber-600 transition">
-                              {idea.title}
-                            </span>
-                            {idea.isStarred && <Star className="w-3 h-3 fill-amber-500 text-amber-500 flex-shrink-0" />}
-                          </div>
-
-                          <div className="flex items-center gap-1.5 flex-shrink-0">
-                            {percent !== null && (
-                              <span className="text-[10px] font-bold text-amber-800 dark:text-amber-300 px-1.5 py-0.5 rounded-md bg-amber-100/80 dark:bg-amber-900/60">
-                                %{percent}
-                              </span>
-                            )}
-                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${meta.bg}`}>
-                              {meta.label}
-                            </span>
-                          </div>
-                        </div>
-
-                        {idea.nextStep ? (
-                          <p className="text-xs text-slate-700 dark:text-slate-300 font-medium flex items-center gap-1.5 line-clamp-1">
-                            <span className="text-amber-600 dark:text-amber-400 font-bold text-[11px] flex-shrink-0">
-                              Sonraki Adım:
-                            </span>
-                            <span className="truncate">{idea.nextStep}</span>
-                          </p>
-                        ) : (
-                          <p className="text-[11px] text-slate-400 italic">
-                            Sonraki adım eklenmedi
-                          </p>
-                        )}
-                      </button>
-                    );
-                  })}
-
-                  {/* 2. Altında Diğer Fikirler (Yıldızlılar önce, son güncellenenler) */}
-                  {displayedOther.map((idea) => {
-                    const meta = getStatusMeta(idea.status);
-
-                    return (
-                      <button
-                        key={idea.id}
-                        type="button"
-                        onClick={() => onNavigateToIdeas && onNavigateToIdeas(idea.id)}
-                        className="w-full text-left p-3 rounded-2xl bg-slate-50 hover:bg-slate-100 dark:bg-slate-800/40 dark:hover:bg-slate-800 transition border border-slate-100 dark:border-slate-800 group"
-                      >
-                        <div className="flex items-center justify-between gap-2">
-                          <div className="flex items-center gap-1.5 min-w-0">
-                            <span className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate group-hover:text-amber-600 dark:group-hover:text-amber-400 transition">
-                              {idea.title}
-                            </span>
-                            {idea.isStarred && <Star className="w-3 h-3 fill-amber-500 text-amber-500 flex-shrink-0" />}
-                          </div>
-
-                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border flex-shrink-0 ${meta.bg}`}>
-                            {meta.label}
-                          </span>
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
             </div>
           );
         })()}
