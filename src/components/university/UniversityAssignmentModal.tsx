@@ -3,6 +3,7 @@ import { X, Check, Calendar, CheckSquare } from 'lucide-react';
 import { UniversityCourse, UniversityAssignment, UniversityAssignmentType } from '../../types';
 
 import { toLocalISODate } from '../../utils/calendar';
+import { ModalShell } from '../common/ModalShell';
 interface UniversityAssignmentModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -53,11 +54,7 @@ export const UniversityAssignmentModal: React.FC<UniversityAssignmentModalProps>
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
-      <div 
-        className="w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200/90 dark:border-slate-800 overflow-hidden flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-200"
-        onClick={(e) => e.stopPropagation()}
-      >
+    <ModalShell onClose={onClose} maxWidthClass="max-w-md">
         <div className="p-4 sm:p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/70 dark:bg-slate-800/40">
           <div>
             <span className="text-[11px] font-semibold text-indigo-600 dark:text-indigo-400">
@@ -152,7 +149,6 @@ export const UniversityAssignmentModal: React.FC<UniversityAssignmentModalProps>
             </button>
           </div>
         </form>
-      </div>
-    </div>
+    </ModalShell>
   );
 };
