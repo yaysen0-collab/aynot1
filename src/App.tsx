@@ -318,7 +318,6 @@ export default function App() {
   const [isNoteModalOpen, setIsNoteModalOpen] = useState(false);
   const [noteToEdit, setNoteToEdit] = useState<StudentNote | null>(null);
   const [noteTargetStudentId, setNoteTargetStudentId] = useState<string | null>(null);
-  const [isVoiceQuickNote, setIsVoiceQuickNote] = useState(false);
 
   // Voice Notes toggle preference (default true)
   const [voiceNotesEnabled, setVoiceNotesEnabled] = useState<boolean>(() => {
@@ -1230,14 +1229,6 @@ export default function App() {
   const handleOpenQuickNote = (studentId?: string) => {
     setNoteToEdit(null);
     setNoteTargetStudentId(studentId || selectedStudentId || null);
-    setIsVoiceQuickNote(false);
-    setIsNoteModalOpen(true);
-  };
-
-  const handleOpenVoiceQuickNote = (studentId?: string) => {
-    setNoteToEdit(null);
-    setNoteTargetStudentId(studentId || selectedStudentId || null);
-    setIsVoiceQuickNote(true);
     setIsNoteModalOpen(true);
   };
 
@@ -2112,10 +2103,8 @@ export default function App() {
       {activeTab !== 'ayarlar' && (
         <FloatingActionButton
           onQuickNote={() => handleOpenQuickNote()}
-          onVoiceQuickNote={() => handleOpenVoiceQuickNote()}
           onQuickIdea={() => setIsGlobalQuickIdeaOpen(true)}
           onQuickPersonalNote={() => setIsGlobalQuickNoteOpen(true)}
-          voiceNotesEnabled={voiceNotesEnabled}
           moduleSettings={moduleSettings}
         />
       )}
@@ -2201,14 +2190,12 @@ export default function App() {
           setIsNoteModalOpen(false);
           setNoteToEdit(null);
           setNoteTargetStudentId(null);
-          setIsVoiceQuickNote(false);
         }}
         onSave={handleSaveNote}
         noteToEdit={noteToEdit}
         targetStudentId={noteTargetStudentId}
         students={students}
         voiceNotesEnabled={voiceNotesEnabled}
-        autoStartVoice={isVoiceQuickNote}
       />
 
       {/* Friday Parent Calls Manager Modal */}

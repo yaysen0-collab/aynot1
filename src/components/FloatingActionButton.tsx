@@ -1,22 +1,18 @@
 import React, { useState } from 'react';
-import { Plus, Edit3, Mic, Lightbulb, StickyNote } from 'lucide-react';
+import { Plus, Edit3, Lightbulb, StickyNote } from 'lucide-react';
 import type { ModuleSettings } from './BottomNav';
 
 interface FloatingActionButtonProps {
   onQuickNote: () => void;
-  onVoiceQuickNote?: () => void;
   onQuickIdea?: () => void;
   onQuickPersonalNote?: () => void;
-  voiceNotesEnabled?: boolean;
   moduleSettings?: ModuleSettings;
 }
 
 export const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({
   onQuickNote,
-  onVoiceQuickNote,
   onQuickIdea,
   onQuickPersonalNote,
-  voiceNotesEnabled = true,
   moduleSettings,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -40,15 +36,6 @@ export const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({
     setIsOpen(false);
     if (onQuickPersonalNote) {
       onQuickPersonalNote();
-    } else {
-      onQuickNote();
-    }
-  };
-
-  const handleVoiceNote = () => {
-    setIsOpen(false);
-    if (onVoiceQuickNote) {
-      onVoiceQuickNote();
     } else {
       onQuickNote();
     }
@@ -80,7 +67,7 @@ export const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({
               onClick={handleQuickPersonalNote}
               className="flex items-center gap-2.5 px-4 py-2.5 rounded-full bg-purple-600 hover:bg-purple-700 text-white shadow-lg active:scale-95 transition text-sm font-semibold touch-manipulation"
             >
-              <span className="text-xs font-semibold">Hızlı Not</span>
+              <span className="text-xs font-semibold">Kişisel Not</span>
               <div className="w-8 h-8 rounded-full bg-white/20 text-white flex items-center justify-center">
                 <StickyNote className="w-4 h-4" />
               </div>
@@ -93,22 +80,9 @@ export const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({
               onClick={handleQuickIdea}
               className="flex items-center gap-2.5 px-4 py-2.5 rounded-full bg-amber-500 hover:bg-amber-600 text-white shadow-lg active:scale-95 transition text-sm font-semibold touch-manipulation"
             >
-              <span className="text-xs font-semibold">Hızlı Fikir</span>
+              <span className="text-xs font-semibold">Fikir</span>
               <div className="w-8 h-8 rounded-full bg-white/20 text-white flex items-center justify-center">
                 <Lightbulb className="w-4 h-4" />
-              </div>
-            </button>
-          )}
-
-          {/* Sesle Hızlı Not Butonu */}
-          {showSchool && voiceNotesEnabled && (
-            <button
-              onClick={handleVoiceNote}
-              className="flex items-center gap-2.5 px-4 py-2.5 rounded-full bg-rose-600 hover:bg-rose-700 text-white shadow-lg active:scale-95 transition text-sm font-semibold touch-manipulation"
-            >
-              <span className="text-xs font-semibold">Sesle Not Al</span>
-              <div className="w-8 h-8 rounded-full bg-white/20 text-white flex items-center justify-center">
-                <Mic className="w-4 h-4" />
               </div>
             </button>
           )}
