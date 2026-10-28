@@ -215,6 +215,8 @@ export const TodayView: React.FC<TodayViewProps> = ({
   const calledCount = activeCallItems.filter((i) => i.called).length;
   const totalToCall = activeCallItems.length;
   const progressPct = totalToCall > 0 ? Math.round((calledCount / totalToCall) * 100) : 0;
+  // Kart sadece arama gününde (aranacak veli varsa) ya da geçen haftadan kalan varsa görünür
+  const showCallCard = (isCallDayToday && totalToCall > 0) || missedCalls.length > 0;
 
   // Study tasks calculation for today
   const todayTasks = studyTasks.filter(
@@ -350,7 +352,7 @@ export const TodayView: React.FC<TodayViewProps> = ({
         )}
 
         {/* CARD 1: CUMA / HAFTALIK VELİ ARAMALARI KARTI */}
-        {moduleSettings.showSchool && (
+        {moduleSettings.showSchool && showCallCard && (
           <div 
             onClick={onOpenParentCalls}
             className={`rounded-3xl border p-5 shadow-sm transition cursor-pointer select-none group touch-manipulation active:scale-[0.99] ${
