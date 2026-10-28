@@ -15,7 +15,6 @@ import {
   BookOpen,
   Play,
   Check,
-  Coffee,
   HelpCircle,
   MoveRight,
   Trash2,
@@ -57,6 +56,28 @@ import { getStudyTypeMeta, formatDuration } from '../../utils/studyUtils';
 import { getExamCountdown, getExamTypeTitle, generateExamIcsFile } from '../../utils/universityUtils';
 import { ExamResultModal } from '../university/ExamResultModal';
 import { getDailyQuote } from '../../utils/quotes';
+
+// "Bugün nasıl?" kartındaki üç seçenek; seçilince düğme kendi rengini alır
+const ENERGY_OPTIONS: { rating: DayEnergyRating; emoji: string; label: string; selectedClass: string }[] = [
+  {
+    rating: 'rahat',
+    emoji: '🌿',
+    label: 'Rahat',
+    selectedClass: 'bg-emerald-50 dark:bg-emerald-950/50 border-emerald-300 dark:border-emerald-700',
+  },
+  {
+    rating: 'normal',
+    emoji: '⚖️',
+    label: 'Normal',
+    selectedClass: 'bg-sky-50 dark:bg-sky-950/50 border-sky-300 dark:border-sky-700',
+  },
+  {
+    rating: 'yorucu',
+    emoji: '🛋️',
+    label: 'Yorucu',
+    selectedClass: 'bg-amber-50 dark:bg-amber-950/50 border-amber-300 dark:border-amber-700 ring-2 ring-amber-500/20',
+  },
+];
 
 export interface ModuleSettings {
   showSchool: boolean;
@@ -287,81 +308,36 @@ export const TodayView: React.FC<TodayViewProps> = ({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
         {/* YORGUNLUK DOSTU MOD: "BUGÜN NASILDI?" KARTI */}
         {(moduleSettings.showStudy || moduleSettings.showEnglish) && (
-          <div className="rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 p-4.5 sm:p-5 shadow-sm space-y-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-2xl bg-teal-50 dark:bg-teal-950/60 text-teal-700 dark:text-teal-300 flex items-center justify-center">
-                  <Coffee className="w-5 h-5" />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100">
-                      Bugün nasıldı?
-                    </h3>
-                    {isEveningTime && (
-                      <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-teal-100 dark:bg-teal-950/80 text-teal-800 dark:text-teal-300">
-                        Akşam Değerlendirmesi
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">
-                    Günün temposuna göre çalışma hedeflerinizi nazikçe uyarlayın
-                  </p>
-                </div>
+          <div className="md:col-span-2 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 px-4 py-3 shadow-sm space-y-3">
+            {/* Tek satır: başlık solda, üç küçük emoji düğmesi sağda */}
+            <div className="flex items-center justify-between gap-3">
+              <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100">
+                {isEveningTime ? 'Bugün nasıldı?' : 'Bugün nasıl?'}
+              </h3>
+
+              <div className="flex gap-1.5">
+                {ENERGY_OPTIONS.map((option) => {
+                  const isSelected = todayCheckin?.rating === option.rating;
+                  return (
+                    <button
+                      key={option.rating}
+                      type="button"
+                      disabled={isSubmittingCheckin}
+                      onClick={() => handleSelectEnergy(option.rating)}
+                      aria-label={option.label}
+                      aria-pressed={isSelected}
+                      title={option.label}
+                      className={`w-11 h-11 rounded-2xl border text-xl flex items-center justify-center transition active:scale-95 ${
+                        isSelected
+                          ? option.selectedClass
+                          : 'bg-slate-50/60 dark:bg-slate-800/40 border-slate-200/80 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800'
+                      }`}
+                    >
+                      {option.emoji}
+                    </button>
+                  );
+                })}
               </div>
-
-              {todayCheckin && (
-                <span className="text-[11px] font-semibold px-2.5 py-1 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
-                  {todayCheckin.rating === 'rahat' && '🌿 Rahat'}
-                  {todayCheckin.rating === 'normal' && '⚖️ Normal'}
-                  {todayCheckin.rating === 'yorucu' && '🛋️ Yorucu'}
-                </span>
-              )}
-            </div>
-
-            {/* 3 Mood Options Buttons */}
-            <div className="grid grid-cols-3 gap-2 pt-1">
-              <button
-                type="button"
-                disabled={isSubmittingCheckin}
-                onClick={() => handleSelectEnergy('rahat')}
-                className={`py-2.5 px-2 rounded-2xl border text-center transition active:scale-95 flex flex-col items-center justify-center gap-1 ${
-                  todayCheckin?.rating === 'rahat'
-                    ? 'bg-emerald-50 dark:bg-emerald-950/50 border-emerald-300 dark:border-emerald-700 text-emerald-900 dark:text-emerald-200 font-bold'
-                    : 'bg-slate-50/60 dark:bg-slate-800/40 border-slate-200/80 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
-                }`}
-              >
-                <span className="text-lg">🌿</span>
-                <span className="text-xs">Rahat</span>
-              </button>
-
-              <button
-                type="button"
-                disabled={isSubmittingCheckin}
-                onClick={() => handleSelectEnergy('normal')}
-                className={`py-2.5 px-2 rounded-2xl border text-center transition active:scale-95 flex flex-col items-center justify-center gap-1 ${
-                  todayCheckin?.rating === 'normal'
-                    ? 'bg-sky-50 dark:bg-sky-950/50 border-sky-300 dark:border-sky-700 text-sky-900 dark:text-sky-200 font-bold'
-                    : 'bg-slate-50/60 dark:bg-slate-800/40 border-slate-200/80 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
-                }`}
-              >
-                <span className="text-lg">⚖️</span>
-                <span className="text-xs">Normal</span>
-              </button>
-
-              <button
-                type="button"
-                disabled={isSubmittingCheckin}
-                onClick={() => handleSelectEnergy('yorucu')}
-                className={`py-2.5 px-2 rounded-2xl border text-center transition active:scale-95 flex flex-col items-center justify-center gap-1 ${
-                  todayCheckin?.rating === 'yorucu'
-                    ? 'bg-amber-50 dark:bg-amber-950/50 border-amber-300 dark:border-amber-700 text-amber-900 dark:text-amber-200 font-bold ring-2 ring-amber-500/20'
-                    : 'bg-slate-50/60 dark:bg-slate-800/40 border-slate-200/80 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
-                }`}
-              >
-                <span className="text-lg">🛋️</span>
-                <span className="text-xs">Yorucu</span>
-              </button>
             </div>
 
             {/* If user marked 'yorucu' and has incomplete tasks, show quick prompt */}
