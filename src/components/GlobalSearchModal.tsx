@@ -17,6 +17,7 @@ import {
 } from '../types';
 import { globalSearchEngine } from '../services/searchService';
 import { BookOpen, GraduationCap, Lightbulb, Terminal } from 'lucide-react';
+import { ModalShell } from './common/ModalShell';
 
 interface GlobalSearchModalProps {
   isOpen: boolean;
@@ -169,11 +170,7 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
-      <div
-        className="w-full max-w-xl bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200/90 dark:border-slate-800 overflow-hidden mt-8 sm:mt-12 flex flex-col max-h-[85vh] animate-in zoom-in-95 duration-200"
-        onClick={(e) => e.stopPropagation()}
-      >
+    <ModalShell onClose={onClose} maxWidthClass="max-w-xl" placement="top">
         {/* Search Input Bar */}
         <div className="p-3.5 sm:p-4 border-b border-slate-100 dark:border-slate-800 flex items-center gap-3 bg-slate-50/60 dark:bg-slate-900/60">
           <Search className="w-5 h-5 text-teal-600 dark:text-teal-400 flex-shrink-0" />
@@ -700,7 +697,6 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({
             </>
           )}
         </div>
-      </div>
-    </div>
+    </ModalShell>
   );
 };

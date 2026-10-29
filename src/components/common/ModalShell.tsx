@@ -11,6 +11,8 @@ interface ModalShellProps {
   maxWidthClass?: string;
   /** false: arka plana dokunmak ve Esc kapatmaz (yanlışlıkla kapanmaması gereken pencereler) */
   dismissible?: boolean;
+  /** 'sheet': telefonda alttan açılır (varsayılan). 'top': ekranın üstünde kutu (arama gibi, klavye altta kalır) */
+  placement?: 'sheet' | 'top';
 }
 
 export const ModalShell: React.FC<ModalShellProps> = ({
@@ -18,7 +20,9 @@ export const ModalShell: React.FC<ModalShellProps> = ({
   children,
   maxWidthClass = 'max-w-lg',
   dismissible = true,
+  placement = 'sheet',
 }) => {
+  const isTop = placement === 'top';
   const [viewport, setViewport] = useState<{ height: number; top: number } | null>(null);
 
   // Klavye açılınca pencereyi görünen alana uydur (iPhone Safari; NoteEditorShell ile aynı yöntem)
@@ -61,7 +65,9 @@ export const ModalShell: React.FC<ModalShellProps> = ({
 
   return (
     <div
-      className="fixed inset-x-0 z-50 flex items-end md:items-center justify-center md:p-4 bg-slate-900/60 backdrop-blur-sm"
+      className={`fixed inset-x-0 z-50 flex justify-center bg-slate-900/60 backdrop-blur-sm ${
+        isTop ? 'items-start p-3 pt-6 sm:p-4 sm:pt-12' : 'items-end md:items-center md:p-4'
+      }`}
       style={{
         top: viewport ? `${viewport.top}px` : 0,
         height: viewport ? `${viewport.height}px` : '100dvh',
@@ -74,12 +80,18 @@ export const ModalShell: React.FC<ModalShellProps> = ({
       <div
         role="dialog"
         aria-modal="true"
-        className={`w-full ${maxWidthClass} max-h-[92%] md:max-h-[90%] flex flex-col overflow-hidden bg-white dark:bg-slate-900 rounded-t-3xl md:rounded-3xl shadow-2xl border border-slate-200/90 dark:border-slate-800 pb-[env(safe-area-inset-bottom,0px)] md:pb-0`}
+        className={`w-full ${maxWidthClass} flex flex-col overflow-hidden bg-white dark:bg-slate-900 shadow-2xl border border-slate-200/90 dark:border-slate-800 ${
+          isTop
+            ? 'max-h-full rounded-3xl'
+            : 'max-h-[92%] md:max-h-[90%] rounded-t-3xl md:rounded-3xl pb-[env(safe-area-inset-bottom,0px)] md:pb-0'
+        }`}
       >
         {/* Telefonda "alt sayfa" tutamacı */}
-        <div className="md:hidden flex justify-center pt-2 pb-1 flex-shrink-0" aria-hidden="true">
-          <div className="w-10 h-1.5 rounded-full bg-slate-300 dark:bg-slate-700" />
-        </div>
+        {!isTop && (
+          <div className="md:hidden flex justify-center pt-2 pb-1 flex-shrink-0" aria-hidden="true">
+            <div className="w-10 h-1.5 rounded-full bg-slate-300 dark:bg-slate-700" />
+          </div>
+        )}
         {children}
       </div>
     </div>
